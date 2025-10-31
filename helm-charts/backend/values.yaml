@@ -1,0 +1,54 @@
+# Default values for backend.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# This will set the replicaset count more information can be found here: https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/
+replicaCount: 1
+
+# This sets the container image more information can be found here: https://kubernetes.io/docs/concepts/containers/images/
+image:
+  repository: bilal7191/backend-backend
+  # This sets the pull policy for images.
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: "v1.0.1"
+
+containerPort: 5000
+nodeSelector:
+  type: application
+service:
+  type: NodePort
+  port: 5000
+
+env:
+  FLASK_ENV: production
+  POSTGRES_HOST: postgres-db
+  POSTGRES_PORT: "5432"
+
+resources:
+  requests:
+    memory: "256Mi"
+    cpu: "250m"
+  limits:
+    memory: "512Mi"
+    cpu: "500m"
+
+postgresql:
+  architecture: standalone
+  enabled: true
+  fullnameOverride: postgres-db #for this case the postgreshost of deploymen tand this should be same 
+  auth:
+    existingSecret: db-secrets
+    secretKeys:
+      adminPasswordKey: "POSTGRES_PASSWORD"
+      userPasswordKey: "POSTGRES_PASSWORD"
+    username: "dev_user"
+    database: "dev_db" 
+  primary:
+    replicaCount: 1
+    nodeSelector:
+      type: database
+    persistence:
+      enabled: true
+      size: 500Mi
+      storageClass: standard

@@ -1,0 +1,15 @@
+Flask==2.3.3
+Flask-SQLAlchemy==3.1.1 #ORM
+Flask-Migrate==4.0.5 #DB migration
+psycopg2-binary==2.9.9 #Postgresql Driver
+python-dotenv==1.0.0 #Load env variables from .env file
+gunicorn==23.0.0 #WSGI server
+marshmallow==3.21.1 #Serialization/Deserialization validation too
+marshmallow-sqlalchemy==1.4.1
+flask-marshmallow==0.15.0
+# Since testing dependencies should not be included in the main requirements file, they have been moved to a separate development requirements file.
+pytest==8.3.2
+pytest-flask==1.3.0
+pytest-cov
+pylint
+flake8

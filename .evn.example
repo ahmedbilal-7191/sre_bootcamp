@@ -1,0 +1,6 @@
+POSTGRES_USER=dev_user
+POSTGRES_PASSWORD=dev_password
+POSTGRES_DB=dev_db
+POSTGRES_HOST=localhost
+POSTGRES_PORT=5432
+SECRET_KEY=dev-secret

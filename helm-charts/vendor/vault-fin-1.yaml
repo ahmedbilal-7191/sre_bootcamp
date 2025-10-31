@@ -1,0 +1,114 @@
+global:
+  enabled: true
+  namespace: vault
+
+server:
+  enabled: true
+  replicas: 3
+
+  nodeSelector:
+    type: dependent_services
+
+  standalone:
+    enabled: false
+
+  # ---------------------------
+  # TLS Certificate Mount
+  # ---------------------------
+  extraEnvironmentVars:
+    VAULT_CACERT: /vault/tls/ca.crt
+    VAULT_TLSCERT: /vault/tls/tls.crt
+    VAULT_TLSKEY: /vault/tls/tls.key
+    VAULT_ADDR: "https://127.0.0.1:8200"
+
+  volumes:
+    - name: vault-tls
+      secret:
+        secretName: vault-tls
+        defaultMode: 420
+
+  volumeMounts:
+    - name: vault-tls
+      mountPath: /vault/tls
+      readOnly: true
+
+  # ---------------------------
+  # Storage Configuration (Raft)
+  # ---------------------------
+  dataStorage:
+    enabled: true
+    size: 500Mi
+    storageClass: "standard"
+    mountPath: "/vault/data"
+
+  # ---------------------------
+  # HA Mode (Raft) with TLS
+  # ---------------------------
+  ha:
+    enabled: true
+    raft:
+      enabled: true
+      config: |
+        ui = true
+
+        listener "tcp" {
+          address = "[::]:8200"
+          cluster_address = "[::]:8201"
+
+          # TLS enabled
+          tls_disable = 0
+          tls_cert_file = "/vault/tls/tls.crt"
+          tls_key_file = "/vault/tls/tls.key"
+          tls_client_ca_file = "/vault/tls/ca.crt"
+          tls_min_version = "tls12"
+        }
+
+        storage "raft" {
+          path = "/vault/data"
+
+          retry_join {
+            leader_api_addr = "https://vault-0.vault-internal:8200"
+            leader_ca_cert_file = "/vault/tls/ca.crt"
+          }
+          retry_join {
+            leader_api_addr = "https://vault-1.vault-internal:8200"
+            leader_ca_cert_file = "/vault/tls/ca.crt"
+          }
+          retry_join {
+            leader_api_addr = "https://vault-2.vault-internal:8200"
+            leader_ca_cert_file = "/vault/tls/ca.crt"
+          }
+        }
+
+        service_registration "kubernetes" {}
+
+  # ---------------------------
+  # Pod Scheduling (Optional)
+  # ---------------------------
+  affinity: |
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchLabels:
+              app.kubernetes.io/instance: "{{ .Release.Name }}"
+              app.kubernetes.io/name: vault
+              component: server
+          topologyKey: kubernetes.io/hostname
+
+ui:
+  enabled: true
+  service:
+    type: ClusterIP
+
+injector:
+  enabled: false
+
+resources:
+  requests:
+    memory: "256Mi"
+    cpu: "100m"
+  limits:
+    memory: "512Mi"
+    cpu: "500m"

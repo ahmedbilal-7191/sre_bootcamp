@@ -1,0 +1,53 @@
+# PostgreSQL Exporter Configuration
+
+# PostgreSQL connection configuration
+config:
+  # Data source name - connection string to your PostgreSQL database
+  datasource:
+    # Format: postgresql://username:password@host:port/database?sslmode=disable
+    userSecret:
+      name: db-secrets        # Secret now in same namespace
+      key: POSTGRES_USER
+    passwordSecret:
+      name: db-secrets
+      key: POSTGRES_PASSWORD
+    host: "postgres-service.test.svc.cluster.local"  # Replace with your PostgreSQL service name
+    port: "5432"
+    database: "dev_db"  # Database to connect to
+    sslmode: "disable"  # Use 'require' for SSL connections
+  
+  # Auto-discover databases (optional)
+  autoDiscoverDatabases: true
+  
+  # Disable default metrics if needed
+  disableDefaultMetrics: true
+  
+  # Disable settings metrics if needed
+  disableSettingsMetrics: true
+
+# Service configuration for Prometheus to scrape
+service:
+  type: ClusterIP
+  port: 9187
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "9187"
+
+# ServiceMonitor for Prometheus Operator (kube-prometheus-stack)
+serviceMonitor:
+  enabled: true
+  namespace: monitoring
+  interval: 30s
+  scrapeTimeout: 10s
+  labels:
+    release: prometheus  # Must match your kube-prometheus-stack release name
+
+# Resource limits
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 200m
+    memory: 256Mi
+

@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-api
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: backend
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      nodeSelector:
+        {{- toYaml .Values.nodeSelector | nindent 8 }}
+      initContainers:
+        - name: wait-for-postgres
+          image: postgres:16-alpine
+          envFrom:
+            - configMapRef:
+                name: backend-config
+            - secretRef:
+                name: db-secrets
+          command: ['sh', '-c']
+          args:
+            - |
+              echo "Waiting for PostgreSQL at $POSTGRES_HOST:$POSTGRES_PORT..."
+              until pg_isready -h $POSTGRES_HOST -p $POSTGRES_PORT -U $POSTGRES_USER; do
+                echo "PostgreSQL is unavailable - sleeping for 2 seconds"
+                sleep 2
+              done
+              echo "PostgreSQL is ready!"
+        - name: migrate-container
+          image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+          envFrom:
+            - configMapRef:
+                name: backend-config
+            - secretRef:
+                name: db-secrets
+          command: ["sh", "-c"]
+          args: ["echo 'Running migrations...' && flask db upgrade && echo 'Migrations complete.'"]
+      containers:
+        - name: backend-container
+          image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+          ports:
+            - containerPort: {{ .Values.containerPort }}
+          envFrom:
+            - configMapRef:
+                name: backend-config
+            - secretRef:
+                name: db-secrets
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          readinessProbe:
+            httpGet:
+              path: /api/v1/health
+              port: {{ .Values.containerPort }}
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3

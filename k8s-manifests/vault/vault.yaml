@@ -1,0 +1,236 @@
+# vault-namespace.yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: vault
+  labels:
+    name: vault
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: vault
+  namespace: vault
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: vault-server-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: system:auth-delegator
+subjects:
+- kind: ServiceAccount
+  name: vault
+  namespace: vault
+---
+# ClusterRole for Vault
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: vault
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list"]
+---
+# ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: vault
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: vault
+subjects:
+  - kind: ServiceAccount
+    name: vault
+    namespace: vault
+---
+# Headless Service for StatefulSet (Service Discovery)
+apiVersion: v1
+kind: Service
+metadata:
+  name: vault-internal
+  namespace: vault
+  labels:
+    app: vault
+spec:
+  clusterIP: None  # Headless service for StatefulSet
+  publishNotReadyAddresses: true  # Important for Raft clustering
+  ports:
+    - name: http
+      port: 8200
+      targetPort: 8200
+    - name: cluster
+      port: 8201
+      targetPort: 8201
+  selector:
+    app: vault
+---
+# External Service (for accessing Vault)
+apiVersion: v1
+kind: Service
+metadata:
+  name: vault
+  namespace: vault
+  labels:
+    app: vault
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 8200
+      targetPort: 8200
+    - name: cluster
+      port: 8201
+      targetPort: 8201
+  selector:
+    app: vault
+---
+# ConfigMap for Vault Configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vault-config
+  namespace: vault
+data:
+  vault.hcl: |
+    ui = true
+
+    listener "tcp" {
+      #address = "[::]:8200"
+      #cluster_address = "[::]:8201"
+      address = "0.0.0.0:8200"
+      cluster_address = "0.0.0.0:8201"
+      tls_cert_file = "/vault/tls/tls.crt"
+      tls_key_file = "/vault/tls/tls.key"
+      tls_client_ca_file = "/vault/tls/ca.crt"
+      tls_min_version = "tls12"
+    }
+
+    storage "raft" {
+      path = "/vault/data"
+
+      # Auto-discovery using Kubernetes API with TLS
+      #retry_join {
+        #auto_join = "provider=k8s namespace=vault label_selector=\"app=vault\""
+        #auto_join_scheme = "https"
+        #auto_join_port = 8200
+        #}
+      retry_join {
+        leader_api_addr = "https://vault-0.vault-internal.vault.svc.cluster.local:8200"
+        leader_ca_cert_file = "/vault/tls/ca.crt"
+      }
+      retry_join {
+        leader_api_addr = "https://vault-1.vault-internal.vault.svc.cluster.local:8200"
+        leader_ca_cert_file = "/vault/tls/ca.crt"
+      }
+      retry_join {
+        leader_api_addr = "https://vault-2.vault-internal.vault.svc.cluster.local:8200"
+        leader_ca_cert_file = "/vault/tls/ca.crt"
+      }
+    }
+
+    api_addr = "https://$(HOSTNAME).vault-internal.vault.svc.cluster.local:8200"
+    cluster_addr = "https://$(HOSTNAME).vault-internal.vault.svc.cluster.local:8201"
+
+    disable_mlock = true
+---
+# StatefulSet for Vault
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: vault
+  namespace: vault
+  labels:
+    app: vault
+spec:
+  serviceName: vault-internal
+  replicas: 3
+  selector:
+    matchLabels:
+      app: vault
+  template:
+    metadata:
+      labels:
+        app: vault
+    spec:
+      nodeSelector:
+        type: dependent_services
+      serviceAccountName: vault
+      securityContext:
+        fsGroup: 1000
+      containers:
+        - name: vault
+          image: hashicorp/vault:1.15.0
+          command:
+            - "/bin/sh"
+            - "-c"
+          args:
+            - |
+              vault server -config=/vault/config/vault.hcl
+          env:
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: VAULT_ADDR
+              value: "https://127.0.0.1:8200"
+            - name: VAULT_API_ADDR
+              value: "https://$(POD_IP):8200"
+            - name: SKIP_CHOWN
+              value: "true"
+            - name: SKIP_SETCAP
+              value: "true"
+            - name: HOSTNAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: VAULT_CLUSTER_ADDR
+              value: "https://$(POD_IP):8201"
+            - name: VAULT_CACERT
+              value: "/vault/tls/ca.crt"
+            - name: VAULT_SKIP_VERIFY
+              value: "false"
+          ports:
+            - containerPort: 8200
+              name: http
+              protocol: TCP
+            - containerPort: 8201
+              name: cluster
+              protocol: TCP
+          volumeMounts:
+            - name: data
+              mountPath: /vault/data
+            - name: config
+              mountPath: /vault/config
+            - name: tls
+              mountPath: /vault/tls
+              readOnly: true
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+      volumes:
+        - name: config
+          configMap:
+            name: vault-config
+        - name: tls
+          secret:
+            secretName: vault-tls
+            defaultMode: 0400
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        storageClassName: standard  # Minikube default storage class
+        resources:
+          requests:
+            storage: 500Mi

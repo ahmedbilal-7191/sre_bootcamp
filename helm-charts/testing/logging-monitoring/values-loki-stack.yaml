@@ -1,0 +1,366 @@
+# Production-Ready Loki Stack Configuration for Minikube
+
+# Loki Configuration
+loki:
+  enabled: true
+  
+  # Persistence for Loki data
+  persistence:
+    enabled: true
+    storageClassName: standard
+    size: 10Gi
+  
+  # Loki configuration
+  config:
+    # Authentication
+    auth_enabled: false
+    
+    # Ingester configuration
+    ingester:
+      chunk_idle_period: 3m
+      chunk_block_size: 262144
+      chunk_retain_period: 1m
+      max_transfer_retries: 0
+      lifecycler:
+        ring:
+          kvstore:
+            store: inmemory
+          replication_factor: 1
+    
+    # Limits configuration
+    limits_config:
+      retention_period: 744h  # 31 days
+      enforce_metric_name: false
+      reject_old_samples: true
+      reject_old_samples_max_age: 168h
+      max_entries_limit_per_query: 5000
+      max_streams_per_user: 0
+      max_global_streams_per_user: 0
+    
+    # Schema configuration
+    schema_config:
+      configs:
+        - from: 2020-10-24
+          store: boltdb-shipper
+          object_store: filesystem
+          schema: v11
+          index:
+            prefix: index_
+            period: 24h
+    
+    # Server configuration
+    server:
+      http_listen_port: 3100
+      grpc_listen_port: 9096
+    
+    # Storage configuration
+    storage_config:
+      boltdb_shipper:
+        active_index_directory: /data/loki/boltdb-shipper-active
+        cache_location: /data/loki/boltdb-shipper-cache
+        cache_ttl: 24h
+        shared_store: filesystem
+      filesystem:
+        directory: /data/loki/chunks
+    
+    # Compactor
+    compactor:
+      working_directory: /data/loki/boltdb-shipper-compactor
+      shared_store: filesystem
+    
+    # Chunk store cache
+    chunk_store_config:
+      max_look_back_period: 0s
+    
+    # Table manager
+    table_manager:
+      retention_deletes_enabled: true
+      retention_period: 744h
+  
+  # Resource limits
+  resources:
+    requests:
+      cpu: 200m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  
+  # Service configuration
+  service:
+    type: ClusterIP
+    port: 3100
+
+# Promtail Configuration (Log Collector)
+promtail:
+  enabled: true
+  
+  # Promtail configuration
+  config:
+    # Server config
+    server:
+      http_listen_port: 3101
+      grpc_listen_port: 0
+    
+    # Client config - where to send logs
+    clients:
+      - url: http://{{ .Release.Name }}-loki:3100/loki/api/v1/push
+        tenant_id: 1
+    
+    # Positions (checkpoint for log files)
+    positions:
+      filename: /run/promtail/positions.yaml
+    
+    # Scrape configs
+    scrape_configs:
+      # Pod logs
+      - job_name: kubernetes-pods
+        pipeline_stages:
+          - cri: {}
+        kubernetes_sd_configs:
+          - role: pod
+        relabel_configs:
+          - source_labels:
+              - __meta_kubernetes_pod_controller_name
+            regex: ([0-9a-z-.]+?)(-[0-9a-f]{8,10})?
+            action: replace
+            target_label: __tmp_controller_name
+          - source_labels:
+              - __meta_kubernetes_pod_label_app_kubernetes_io_name
+              - __meta_kubernetes_pod_label_app
+              - __tmp_controller_name
+              - __meta_kubernetes_pod_name
+            regex: ^;*([^;]+)(;.*)?$
+            action: replace
+            target_label: app
+          - source_labels:
+              - __meta_kubernetes_pod_label_app_kubernetes_io_component
+              - __meta_kubernetes_pod_label_component
+            regex: ^;*([^;]+)(;.*)?$
+            action: replace
+            target_label: component
+          - action: replace
+            source_labels:
+            - __meta_kubernetes_pod_node_name
+            target_label: node_name
+          - action: replace
+            source_labels:
+            - __meta_kubernetes_namespace
+            target_label: namespace
+          - action: replace
+            replacement: $1
+            separator: /
+            source_labels:
+            - namespace
+            - app
+            target_label: job
+          - action: replace
+            source_labels:
+            - __meta_kubernetes_pod_name
+            target_label: pod
+          - action: replace
+            source_labels:
+            - __meta_kubernetes_pod_container_name
+            target_label: container
+          - action: replace
+            replacement: /var/log/pods/*$1/*.log
+            separator: /
+            source_labels:
+            - __meta_kubernetes_pod_uid
+            - __meta_kubernetes_pod_container_name
+            target_label: __path__
+          - action: replace
+            regex: true/(.*)
+            replacement: /var/log/pods/*$1/*.log
+            separator: /
+            source_labels:
+            - __meta_kubernetes_pod_annotationpresent_kubernetes_io_config_hash
+            - __meta_kubernetes_pod_annotation_kubernetes_io_config_hash
+            - __meta_kubernetes_pod_container_name
+            target_label: __path__
+  
+  # Resource limits
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+  
+  # Run on all nodes
+  tolerations:
+    - effect: NoSchedule
+      operator: Exists
+
+# Grafana Configuration
+grafana:
+  enabled: true
+  
+  # Admin credentials
+  #adminUser: admin
+  #adminPassword: "Admin@123"  # CHANGE THIS IN PRODUCTION!
+  
+  # Persistence for Grafana data
+  persistence:
+    enabled: true
+    storageClassName: standard
+    size: 5Gi
+    accessModes:
+      - ReadWriteOnce
+  
+  # Service configuration
+  service:
+    type: NodePort
+    nodePort: 32000
+    port: 80
+  
+  # Grafana configuration
+  grafana.ini:
+    server:
+      root_url: "%(protocol)s://%(domain)s:%(http_port)s/"
+      serve_from_sub_path: false
+    
+    analytics:
+      reporting_enabled: false
+      check_for_updates: false
+    
+        #security:
+        #admin_user: admin
+        #admin_password: Admin@123
+        #disable_gravatar: true
+    
+    users:
+      allow_sign_up: false
+      auto_assign_org: true
+      auto_assign_org_role: Viewer
+    
+    auth.anonymous:
+      enabled: false
+    
+    log:
+      mode: console
+      level: info
+    
+    paths:
+      data: /var/lib/grafana
+      logs: /var/log/grafana
+      plugins: /var/lib/grafana/plugins
+      provisioning: /etc/grafana/provisioning
+  
+  # Datasources configuration
+  datasources:
+    datasources.yaml:
+      apiVersion: 1
+      datasources:
+        # Loki datasource
+        - name: Loki
+          type: loki
+          access: proxy
+          url: http://{{ .Release.Name }}-loki:3100
+          isDefault: true
+          editable: true
+          jsonData:
+            maxLines: 1000
+            derivedFields:
+              - datasourceUid: Prometheus
+                matcherRegex: "traceID=(\\w+)"
+                name: TraceID
+                url: "$${__value.raw}"
+        
+        # Prometheus datasource (if kube-prometheus-stack is installed)
+        #- name: Prometheus
+        # type: prometheus
+        # access: proxy
+        # url: http://prometheus-kube-prometheus-prometheus.monitoring:9090
+        # isDefault: false
+        # editable: true
+        # jsonData:
+        #   timeInterval: 30s
+  
+  # Dashboard providers
+  dashboardProviders:
+    dashboardproviders.yaml:
+      apiVersion: 1
+      providers:
+        - name: 'default'
+          orgId: 1
+          folder: ''
+          type: file
+          disableDeletion: false
+          editable: true
+          allowUiUpdates: true
+          options:
+            path: /var/lib/grafana/dashboards/default
+        - name: 'loki'
+          orgId: 1
+          folder: 'Loki'
+          type: file
+          disableDeletion: false
+          editable: true
+          allowUiUpdates: true
+          options:
+            path: /var/lib/grafana/dashboards/loki
+  
+  # Pre-installed dashboards
+  dashboards:
+    default:
+      # Kubernetes cluster monitoring
+      kubernetes-cluster:
+        gnetId: 7249
+        revision: 1
+        datasource: Prometheus
+      
+      # Node exporter
+      node-exporter:
+        gnetId: 1860
+        revision: 27
+        datasource: Prometheus
+    
+    loki:
+      # Loki dashboard
+      loki-dashboard:
+        gnetId: 13639
+        revision: 2
+        datasource: Loki
+      
+      # Loki logs
+      loki-logs:
+        gnetId: 12019
+        revision: 2
+        datasource: Loki
+  
+  
+  # Environment variables
+  env:
+    GF_EXPLORE_ENABLED: "true"
+    GF_ALERTING_ENABLED: "true"
+    GF_UNIFIED_ALERTING_ENABLED: "true"
+    GF_FEATURE_TOGGLES_ENABLE: "ngalert"
+  
+  # Resource limits
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: 500m
+      memory: 1Gi
+  
+  
+
+# Filebeat (disabled - using Promtail instead)
+filebeat:
+  enabled: false
+
+# Logstash (disabled - using Promtail instead)
+logstash:
+  enabled: false
+
+# Fluent Bit (disabled - using Promtail instead)
+fluent-bit:
+  enabled: false
+
+# Prometheus (disabled - using separate kube-prometheus-stack)
+prometheus:
+  enabled: false

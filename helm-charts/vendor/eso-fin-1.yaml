@@ -1,0 +1,55 @@
+# Namespace where ESO will run
+namespace: external-secrets
+
+# Ensure CRDs are installed with the release
+installCRDs: true
+
+# Controller configuration
+controller:
+  # Enable the controller manager
+  create: true
+
+  # Node selector to ensure pods run only on dependent node
+  nodeSelector:
+    type: dependent_services
+
+  # Number of controller replicas
+  replicaCount: 1
+
+  # Pod resources (optional, can adjust later)
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
+
+  # Optional tolerations (if your dependent node has taints)
+  # tolerations:
+  #   - key: "type"
+  #     operator: "Equal"
+  #     value: "dependent"
+  #     effect: "NoSchedule"
+
+# Webhook component (used for validation and mutation)
+webhook:
+  create: true
+  nodeSelector:
+    type: dependent_services
+
+# Cert controller for managing webhook certificates
+certController:
+  create: true
+  nodeSelector:
+    type: dependent_services
+
+# Service Account
+serviceAccount:
+  create: true
+  name: vault-auth
+
+# RBAC
+rbac:
+  create: true
+

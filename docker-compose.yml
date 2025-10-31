@@ -1,0 +1,62 @@
+services:
+
+  backend:
+    build: .
+    container_name: backend_container
+    ports:
+      - "5000:5000"
+    env_file:
+      - .env
+    restart: always
+    networks:
+      - appnet
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    
+  migrate:
+    build:
+      context: .
+    container_name: migrate_container
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - .env
+    command: >
+      sh -c "echo 'Running migrations...' &&
+             flask db upgrade &&
+             echo 'Migrations complete.'"
+    restart: "no"
+    networks:
+      - appnet
+
+  db:
+    image: postgres:latest
+    container_name: postgres_db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    networks:
+      - appnet
+    restart: always
+
+volumes:
+  pg-data:
+
+networks:
+  appnet:
+    driver: bridge
