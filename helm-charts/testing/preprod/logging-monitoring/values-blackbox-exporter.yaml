@@ -1,0 +1,49 @@
+config:
+  modules:
+    http_2xx:
+      prober: http
+      timeout: 8s
+      http:
+        method: GET
+        valid_status_codes: []   # defaults to 2xx
+        preferred_ip_protocol: "ip4"
+
+# ---------------------------------------
+# ServiceMonitor configuration
+# ---------------------------------------
+serviceMonitor:
+  enabled: true
+  namespace: monitoring        # Namespace where Prometheus runs
+  interval: 30s
+  scrapeTimeout: 10s
+  labels:
+    release: prometheus        # Must match your Prometheus release name
+
+  # Define endpoints to probe
+  targets:
+    - name: prometheus
+      url: http://prometheus-kube-prometheus-prometheus.monitoring.svc.cluster.local:9090
+    - name: loki
+      url: http://loki-gateway.monitoring.svc.cluster.local:3100   # Loki service URL
+      module: http_2xx
+    - name: grafana
+      url: http://grafana.monitoring.svc.cluster.local:3000  # Grafana service URL
+      module: http_2xx
+
+# ---------------------------------------
+# Optional — deployment settings
+# ---------------------------------------
+replicaCount: 1
+
+service:
+  type: ClusterIP
+  port: 9115
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    cpu: 200m
+    memory: 256Mi
+
