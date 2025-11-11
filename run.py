@@ -1,5 +1,9 @@
 import os
 from dotenv import load_dotenv
+if "PROMETHEUS_MULTIPROC_DIR" in os.environ:
+    import shutil
+    shutil.rmtree(os.environ["PROMETHEUS_MULTIPROC_DIR"], ignore_errors=True)
+    os.makedirs(os.environ["PROMETHEUS_MULTIPROC_DIR"], exist_ok=True)
 from app import create_app
 
 # Load environment variables from .env

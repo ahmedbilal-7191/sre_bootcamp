@@ -21,6 +21,9 @@ WORKDIR /app
 COPY --from=builder /install /usr/local
 COPY --from=builder /app .
 
+ENV PROMETHEUS_MULTIPROC_DIR=/tmp/prometheus_multiproc_dir
+RUN mkdir -p /tmp/prometheus_multiproc_dir
+
 EXPOSE 5000
 
 CMD ["gunicorn", "-w", "2", "-b", "0.0.0.0:5000", "run:app"]
