@@ -1,5 +1,5 @@
 #Builder Stage
-FROM python:3.9-slim AS Builder
+FROM python:3.9-slim AS builder
 
 WORKDIR /app
 
@@ -12,17 +12,18 @@ COPY requirements.txt .
 
 RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
 
-COPY . .
+
 #Runner Stage
-FROM python:3.9-slim AS Runner
+FROM python:3.9-slim AS runner
 
 WORKDIR /app
 
 COPY --from=builder /install /usr/local
-COPY --from=builder /app .
+COPY . .
+# COPY --from=builder /app .
 
 ENV PROMETHEUS_MULTIPROC_DIR=/tmp/prometheus_multiproc_dir
-RUN mkdir -p /tmp/prometheus_multiproc_dir
+RUN mkdir -p $PROMETHEUS_MULTIPROC_DIR
 
 EXPOSE 5000
 

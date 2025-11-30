@@ -7,6 +7,7 @@ __pycache__/
 tests/
 .git
 venv/
+wvenv/
 k8s-manifests/
 Makefile
 docker-compose.baremetal.yml
@@ -19,3 +20,8 @@ pytest.ini
 *.py[cod]
 *$py.class
 Dockerfile
+helm-charts/
+.github/
+Vagrantfile
+provision.sh
+.pytest_cache

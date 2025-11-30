@@ -1,13 +1,15 @@
-import os
 from dotenv import load_dotenv
-if "PROMETHEUS_MULTIPROC_DIR" in os.environ:
-    import shutil
-    shutil.rmtree(os.environ["PROMETHEUS_MULTIPROC_DIR"], ignore_errors=True)
-    os.makedirs(os.environ["PROMETHEUS_MULTIPROC_DIR"], exist_ok=True)
+load_dotenv()
+import os
+import shutil
 from app import create_app
 
+if "PROMETHEUS_MULTIPROC_DIR" in os.environ:
+    shutil.rmtree(os.environ["PROMETHEUS_MULTIPROC_DIR"], ignore_errors=True)
+    os.makedirs(os.environ["PROMETHEUS_MULTIPROC_DIR"], exist_ok=True)
+
 # Load environment variables from .env
-load_dotenv()
+
 
 # Pick config name from env (default = development)
 config_name = os.getenv("FLASK_ENV", "development")

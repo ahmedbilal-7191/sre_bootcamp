@@ -4,8 +4,9 @@ Flask-Migrate==4.0.5 #DB migration
 psycopg2-binary==2.9.9 #Postgresql Driver
 python-dotenv==1.0.0 #Load env variables from .env file
 gunicorn==23.0.0 #WSGI server
-marshmallow==3.21.1 #Serialization/Deserialization validation too
-marshmallow-sqlalchemy==1.4.1
+marshmallow==3.21.1 #Serialization/Deserialization validation too #Check Done
+marshmallow-sqlalchemy==1.4.1 #Check 
 flask-marshmallow==0.15.0
 prometheus-client>=0.20.0
+# python-json-logger
 # marshmallow-sqlalchemy==0.30.1 #Integration of Marshmallow with SQLAlchemy
