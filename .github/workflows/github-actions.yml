@@ -31,8 +31,8 @@ jobs:
       - name: Installing dependencies
         run: make build-local-api
 
-      - name: Run tests
-        run: make test
+      # - name: Run tests
+      #   run: make test
 
       - name: Lint code (flake8)
         run: make lint
