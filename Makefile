@@ -9,7 +9,7 @@ build-local-api:
 # 	python -m venv venv
 # 	venv\Scripts\activate
 	python -m pip install --upgrade pip
-	pip install --no-cache-dir -r requirements.txt
+	pip install --no-cache-dir -r requirements.dev.txt
 	@echo "Local API build done..."
 run-local-api:
 	@echo "Running local API..."
