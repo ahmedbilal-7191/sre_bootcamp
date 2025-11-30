@@ -5,6 +5,15 @@ on:
     branches: [ main ]
     tags:
       - "v*.*.*"
+
+  workflow_dispatch:
+    inputs:
+      tag_version:
+        description: "Docker image tag (e.g., 1.0.0) Note: not for GIT tags[test purpose]"
+        required: true
+        type: string
+    
+
 jobs:
   build-test-push:
     name: CI
@@ -18,7 +27,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
            python-version: "3.11"
-           
+
       - name: Installing dependencies
         run: make build-local-api
 
