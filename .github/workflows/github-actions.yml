@@ -66,7 +66,13 @@ jobs:
       - name: Checkout Repo
         uses: actions/checkout@v4
         with:
+          ref: main
+          fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set remote URL
+        run: |
+          git remote set-url origin https://github.com/${{ github.repository }}.git
 
       - name: Extract Version Tag
         id: vars
