@@ -11,7 +11,7 @@ image:
   # This sets the pull policy for images.
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "0.0.2"
+  tag: 1.0.0
 
 containerPort: 5000
 nodeSelector:
@@ -51,4 +51,4 @@ postgresql:
     persistence:
       enabled: true
       size: 500Mi
-      storageClass: standard
+      storageClass: csi-hostpath-sc
