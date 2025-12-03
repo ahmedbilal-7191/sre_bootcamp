@@ -230,7 +230,7 @@ spec:
         name: data
       spec:
         accessModes: ["ReadWriteOnce"]
-        storageClassName: standard  # Minikube default storage class
+        storageClassName: csi-hostpath-sc  # Minikube default storage class
         resources:
           requests:
             storage: 500Mi

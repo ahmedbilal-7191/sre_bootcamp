@@ -1,0 +1,177 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: custom-alerts
+  namespace: observability
+  labels:
+    rules: alerting
+spec:
+  groups:
+
+  # ---------------------------------------------------------
+  # 1. Host Alerts (CPU, Disk)
+  # ---------------------------------------------------------
+  - name: host-alerts
+    rules:
+      - alert: HighCpuUtilization
+        expr: 100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 5m
+        labels:
+          severity: critical
+          team: devops
+        annotations:
+          summary: "High CPU utilization on {{ $labels.instance }}"
+          description: "CPU utilization has been above 80% for 5 minutes."
+
+      - alert: HighDiskUtilization
+        expr: |
+          node_filesystem_avail_bytes{fstype!="rootfs",mountpoint!="/boot"}
+          /
+          node_filesystem_size_bytes{fstype!="rootfs",mountpoint!="/boot"} * 100 < 10
+        for: 10m
+        labels:
+          severity: warning
+          team: devops
+        annotations:
+          summary: "High disk utilization on {{ $labels.instance }} (mountpoint: {{ $labels.mountpoint }})"
+          description: "Disk usage is above 90% for more than 10 minutes."
+
+
+  # ---------------------------------------------------------
+  # 2. Error Rate Spike Alerts
+  # ---------------------------------------------------------
+  - name: error-rate-alerts
+    rules:
+      - alert: HighErrorRateSpike
+        expr: |
+          sum(rate(http_requests_total{status=~"5.."}[10m]))
+          /
+          sum(rate(http_requests_total[10m])) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+          team: devops
+        annotations:
+          summary: "High error rate detected in the last 10 minutes"
+          description: |
+            5xx error rate is greater than 5%.
+            Current: {{ $value | humanizePercentage }}
+
+
+  # ---------------------------------------------------------
+  # 3. Latency Alerts (P90 / P95 / P99)
+  # ---------------------------------------------------------
+  - name: service-latency-alerts
+    rules:
+      - alert: HighRequestLatencyP90
+        expr: |
+          histogram_quantile(0.90,
+            sum by (le,job) (rate(http_request_duration_seconds_bucket[5m]))
+          ) > 0.5
+        for: 10m
+        labels:
+          severity: warning
+          team: devops
+        annotations:
+          summary: "High P90 request latency for {{ $labels.job }}"
+          description: |
+            P90 latency > 0.5s for 10 minutes. Current: {{ $value }}s
+
+      - alert: HighRequestLatencyP95
+        expr: |
+          histogram_quantile(0.95,
+            sum by (le,job) (rate(http_request_duration_seconds_bucket[5m]))
+          ) > 1
+        for: 5m
+        labels:
+          severity: page
+          team: devops
+        annotations:
+          summary: "High P95 request latency for {{ $labels.job }}"
+          description: |
+            P95 latency > 1s for 5 minutes. Current: {{ $value }}s
+
+      - alert: HighRequestLatencyP99
+        expr: |
+          histogram_quantile(0.99,
+            sum by (le,job) (rate(http_request_duration_seconds_bucket[5m]))
+          ) > 2
+        for: 2m
+        labels:
+          severity: critical
+          team: devops
+        annotations:
+          summary: "High P99 request latency for {{ $labels.job }}"
+          description: |
+            P99 latency > 2s for 2 minutes. Current: {{ $value }}s
+
+
+  # ---------------------------------------------------------
+  # 4. Restart Alerts for DB / ArgoCD / Vault
+  # ---------------------------------------------------------
+  - name: service-restart-alerts
+    rules:
+      - alert: DatabaseRestarted
+        expr: increase(kube_pod_container_status_restarts_total{pod=~"postgres.*"}[10m]) > 0
+        for: 1m
+        labels:
+          severity: critical
+          team: devops
+        annotations:
+          summary: "Database pod restarted"
+          description: "Postgres pod restarted in the last 10 minutes."
+
+      - alert: ArgoCDRestarted
+        expr: increase(kube_pod_container_status_restarts_total{pod=~"argocd.*"}[10m]) > 0
+        for: 1m
+        labels:
+          severity: warning
+          team: devops
+        annotations:
+          summary: "ArgoCD restarted"
+          description: "ArgoCD pod restarted in the last 10 minutes."
+
+      - alert: VaultRestarted
+        expr: increase(kube_pod_container_status_restarts_total{pod=~"vault.*"}[10m]) > 0
+        for: 1m
+        labels:
+          severity: critical
+          team: devops
+        annotations:
+          summary: "Vault restarted"
+          description: "Vault pod restarted in the last 10 minutes."
+
+
+  # ---------------------------------------------------------
+  # 5. Your Existing Application Alerts
+  # ---------------------------------------------------------
+  - name: application-health
+    rules:
+      - alert: HighRequestErrorRate
+        expr: |
+          (sum(rate(http_requests_total{job="my-app", status="5xx"}[5m]))
+           /
+           sum(rate(http_requests_total{job="my-app"}[5m]))) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+          team: devops
+        annotations:
+          summary: "High request error rate detected for {{ $labels.job }}"
+          description: |
+            HTTP 5xx error rate >5% for last 5 minutes.
+
+      - alert: LowDiskSpace
+        expr: |
+          node_filesystem_avail_bytes{mountpoint="/data",fstype!="rootfs"}
+          /
+          node_filesystem_size_bytes{mountpoint="/data",fstype!="rootfs"} * 100 < 10
+        for: 10m
+        labels:
+          severity: critical
+          team: devops
+        annotations:
+          summary: "Low disk space on {{ $labels.instance }}"
+          description: |
+            Disk space below 10% on mountpoint '/data'.
+

@@ -1,0 +1,77 @@
+config:
+  modules:
+    http_2xx:
+      prober: http
+      timeout: 8s
+      http:
+        method: GET
+        valid_status_codes: []   # defaults to 2xx
+        preferred_ip_protocol: "ip4"
+
+nodeSelector:
+  type: dependent_services
+
+serviceMonitor:
+  enabled: true
+  namespace: observability        # Namespace where Prometheus runs
+  interval: 30s
+  scrapeTimeout: 10s
+  labels:
+    release: prometheus        # Must match your Prometheus release name
+  defaults:
+    additionalMetricsRelabels: {}
+    additionalRelabeling: []
+    labels:
+      release: prometheus # Add the desired label here
+    interval: 30s
+    scrapeTimeout: 30s
+    honorTimestamps: true
+    module: http_2xx
+
+  # Define endpoints to probe
+  targets:
+    - name: prometheus
+      url: http://prometheus-kube-prometheus-prometheus.observability.svc.cluster.local:9090
+      module: http_2xx
+      labels:
+        app: prometheus
+        release: prometheus
+    - name: alertmanager 
+      url: http://prometheus-kube-prometheus-alertmanager.observability.svc.cluster.local:30093
+      module: http_2xx
+      labels:
+        app: alertmanager
+        release: prometheus
+
+    - name: loki
+      url: http://loki-gateway.observability.svc.cluster.local:80   # Loki service URL
+      module: http_2xx
+      labels:
+        app: loki
+        release: prometheus
+    - name: grafana
+      url: http://grafana.observability.svc.cluster.local:80  # Grafana service URL
+      module: http_2xx
+      labels:
+        app: grafana
+        release: prometheus
+    - name: google
+      url: https://www.google.com
+      module: https_2xx
+      labels:
+        app: google
+        release: prometheus
+replicaCount: 1
+
+service:
+  type: ClusterIP
+  port: 9115
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    cpu: 200m
+    memory: 256Mi
+

@@ -38,7 +38,7 @@ server:
   dataStorage:
     enabled: true
     size: 500Mi
-    storageClass: "standard"
+    storageClass: "csi-hostpath-sc"
     mountPath: "/vault/data"
 
   # ---------------------------

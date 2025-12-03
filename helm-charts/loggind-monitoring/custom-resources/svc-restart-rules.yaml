@@ -1,0 +1,47 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: svc-restart-rules
+  namespace: observability
+  labels:
+    rules: alerting
+spec:
+  groups:
+
+  # ---------------------------------------------------------
+  # 4. Restart Alerts for DB / ArgoCD / Vault
+  # ---------------------------------------------------------
+  - name: service-restart-alerts
+    rules:
+      - alert: DatabaseRestarted
+        expr: increase(kube_pod_container_status_restarts_total{pod=~"postgres.*"}[10m]) > 0
+        for: 1m
+        labels:
+          severity: critical
+          team: devops
+        annotations:
+          summary: "Database pod restarted"
+          description: "Postgres pod restarted in the last 10 minutes."
+
+      - alert: ArgoCDRestarted
+        expr: increase(kube_pod_container_status_restarts_total{pod=~"argocd.*"}[10m]) > 0
+        for: 1m
+        labels:
+          severity: warning
+          team: devops
+        annotations:
+          summary: "ArgoCD restarted"
+          description: "ArgoCD pod restarted in the last 10 minutes."
+
+      - alert: VaultRestarted
+        expr: increase(kube_pod_container_status_restarts_total{pod=~"vault.*"}[10m]) > 0
+        for: 1m
+        labels:
+          severity: critical
+          team: devops
+        annotations:
+          summary: "Vault restarted"
+          description: "Vault pod restarted in the last 10 minutes."
+
+
+

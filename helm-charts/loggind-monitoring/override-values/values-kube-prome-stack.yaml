@@ -1,0 +1,103 @@
+# Simple Kube-Prometheus-Stack Configuration
+prometheusOperator:
+  nodeSelector:
+    type: dependent_services
+  admissionWebhooks:
+    patch:
+      nodeSelector:
+        type: dependent_services
+# Prometheus Configuration
+prometheus:
+  enabled: true
+  prometheusSpec:
+    nodeSelector:
+      type: dependent_services
+    # Data retention period
+    retention: 15d
+    
+    # Storage configuration
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: "csi-hostpath-sc"
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 1Gi
+    
+    # Resource requests and limits
+    resources:
+      requests:
+        memory: 1Gi
+        cpu: 500m
+      limits:
+        memory: 2Gi
+        cpu: 1000m
+          
+    ruleSelector:
+      matchLabels:
+        rules: alerting
+  service:
+    type: NodePort
+    nodePort: 30090
+
+# Grafana Configuration
+grafana:
+  enabled: false
+
+# Alertmanager Configuration
+alertmanager:
+  enabled: true
+  config:
+    route:
+      group_wait: 10s
+      group_interval: 5m
+      repeat_interval: 12h
+      receiver: 'null'
+      routes:
+        - matchers:
+            - team=~"devops" #these both should be there matching the alerts in promerthes config for labels
+            - severity=~"critical"
+          receiver: slack-notifications
+          continue: true
+    receivers:
+      - name: 'null'
+      - name: 'slack-notifications'
+        slack_configs:
+          - api_url_file: /etc/alertmanager/secrets/alertmanager-slack-secret/slack-api-url
+            channel: '#all-alert-manager-prometheus'    # your channel name
+            send_resolved: true
+            text: |
+              *Summary:* {{ .CommonAnnotations.summary }}
+              *Description:* {{ .CommonAnnotations.description }}
+  alertmanagerSpec:
+    nodeSelector:
+      type: dependent_services
+    secrets:
+      - alertmanager-slack-secret
+    storage:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: "csi-hostpath-sc"
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 1Gi
+  
+  service:
+    type: NodePort
+    nodePort: 30093
+
+# Node Exporter - Collects hardware and OS metrics
+prometheus-node-exporter:
+  enabled: true
+
+# Kube State Metrics - Collects Kubernetes object metrics
+kube-state-metrics:
+  enabled: true
+  nodeSelector:
+    type: dependent_services
+
+# Service Monitors - Auto-discover services to monitor
+serviceMonitor:
+  enabled: true

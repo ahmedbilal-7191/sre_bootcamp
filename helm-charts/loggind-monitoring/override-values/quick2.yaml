@@ -1,0 +1,83 @@
+config:
+  clients:
+    - url: http://loki-gateway.observability.svc.cluster.local/loki/api/v1/push
+      tenant_id: 1
+  logLevel: debug
+  snippets:
+    # Inject into every scrape_config's relabel_configs
+    extraRelabelConfigs:
+      - source_labels: [__meta_kubernetes_namespace]
+        action: keep
+        regex: test
+
+    # Injected into every scrape_config's pipeline_stages
+    pipelineStages:
+
+      # 1. Extract CRI log fields (outer JSON)
+      - json:
+          expressions:
+            log: log
+            stream: stream
+            time: time
+
+      # 2. Remove trailing newline from log field
+      - regex:
+          source: log
+          expression: "^(?P<clean>{.*})\\n?$"
+
+      # 3. First unescape pass: \" -> "
+      - replace:
+          source: clean
+          expression: '\\\\"'
+          replace: '"'
+
+      # 4. Extra unescape pass for Gunicorn access logs: \\\" -> "
+      - replace:
+          source: clean
+          expression: '\\\\\"'
+          replace: '"'
+
+      # 5. Parse the actual inner JSON
+      - json:
+          source: clean
+          expressions:
+            timestamp: timestamp
+            level: level
+            logger: logger
+            message: message
+            log_type: log_type
+
+      # 6. Promote selected JSON fields as labels
+      - labels:
+          level:
+          log_type:
+          logger:
+
+      # 7. Set final log output to the cleaned JSON
+      - output:
+          source: clean
+
+nodeSelector:
+  type: application
+
+initContainer:
+  - name: increase-inotify
+    image: busybox:1.33
+    imagePullPolicy: IfNotPresent
+    command:
+      - sh
+      - -c
+      - |
+        sysctl -w fs.inotify.max_user_instances=2048
+        sysctl -w fs.inotify.max_user_watches=524288
+    securityContext:
+      privileged: true
+
+serviceMonitor:
+  enabled: true
+  namespace: observability
+  interval: 30s
+  scrapeTimeout: 10s
+  labels:
+    release: prometheus
+

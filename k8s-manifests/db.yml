@@ -32,7 +32,7 @@ spec:
         name: pg-data
       spec:
         accessModes: ["ReadWriteOnce"]
-        storageClassName: standard
+        storageClassName: csi-hostpath-sc
         resources:
           requests:
             storage: 500Mi

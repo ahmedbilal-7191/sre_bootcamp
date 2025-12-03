@@ -1,0 +1,37 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: custom-alerts
+  namespace: observability
+  labels:
+    rules: alerting
+spec:
+  groups:
+
+  # ---------------------------------------------------------
+  # 1. Host Alerts (CPU, Disk)
+  # ---------------------------------------------------------
+  - name: host-alerts
+    rules:
+      - alert: HighCpuUtilization
+        expr: 100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 5m
+        labels:
+          severity: critical
+          team: devops
+        annotations:
+          summary: "High CPU utilization on {{ $labels.instance }}"
+          description: "CPU utilization has been above 80% for 5 minutes."
+
+      - alert: HighDiskUtilization
+        expr: |
+          node_filesystem_avail_bytes{fstype!="rootfs",mountpoint!="/boot"}
+          /
+          node_filesystem_size_bytes{fstype!="rootfs",mountpoint!="/boot"} * 100 < 10
+        for: 10m
+        labels:
+          severity: warning
+          team: devops
+        annotations:
+          summary: "High disk utilization on {{ $labels.instance }} (mountpoint: {{ $labels.mountpoint }})"
+          description: "Disk usage is above 90% for more than 10 minutes."
