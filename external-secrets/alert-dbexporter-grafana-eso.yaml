@@ -1,0 +1,104 @@
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: postgres-exporter-secrets
+  # Replace with the namespace where you want the secret to be created
+  namespace: observability
+spec:
+  refreshInterval: "1h" # Syncs the secret every hour
+  secretStoreRef:
+    name: vault-backend-cluster
+    kind: ClusterSecretStore
+  target:
+    name: db-secrets # The name of the Kubernetes secret to be created
+    creationPolicy: Owner
+  data:
+    - secretKey: POSTGRES_USER
+      remoteRef:
+        key: database # Path inside the KV engine
+        property: POSTGRES_USER
+    - secretKey: POSTGRES_PASSWORD
+      remoteRef:
+        key: database
+        property: POSTGRES_PASSWORD
+    - secretKey: POSTGRES_DB
+      remoteRef:
+        key: database
+        property: POSTGRES_DB
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: grafana-secret
+  # Replace with the namespace where you want the secret to be created
+  namespace: observability
+spec:
+  refreshInterval: "1h" # Syncs the secret every hour
+  secretStoreRef:
+    name: vault-backend-cluster
+    kind: ClusterSecretStore
+  target:
+    name: grafana-secret # The name of the Kubernetes secret to be created
+    creationPolicy: Owner
+  data:
+    - secretKey: admin-user #secret mein yeh name se key banayega
+      remoteRef:
+        key: grafana # Path inside the KV engine
+        property: admin-user #teh databse path mein se kaunse key ko fetch karna
+    - secretKey: admin-password
+      remoteRef:
+        key: grafana
+        property: admin-password
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: alertmanager-apiurl-secret
+  # Replace with the namespace where you want the secret to be created
+  namespace: observability
+spec:
+  refreshInterval: "1h" # Syncs the secret every hour
+  secretStoreRef:
+    name: vault-backend-cluster
+    kind: ClusterSecretStore
+  target:
+    name: alertmanager-slack-secret # The name of the Kubernetes secret to be created
+    creationPolicy: Owner
+  data:
+    - secretKey: slack-api-url #secret mein yeh name se key banayega
+      remoteRef:
+        key: alertmanager # Path inside the KV engine
+        property: slack-api-url #teh databse path mein se kaunse key ko fetch karna
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: argocd-repo-secret
+  # Replace with the namespace where you want the secret to be created
+  namespace: argocd
+spec:
+  refreshInterval: "1h" # Syncs the secret every hour
+  secretStoreRef:
+    name: vault-backend-cluster
+    kind: ClusterSecretStore
+  target:
+    name: argocd-private-repo-creds # The name of the Kubernetes secret to be created
+    creationPolicy: Owner
+    template:
+      metadata:
+        labels:
+          argocd.argoproj.io/secret-type: repository
+
+  data:
+    - secretKey: url #secret mein yeh name se key banayega
+      remoteRef:
+        key: argocdreposecrets # Path inside the KV engine
+        property: url #teh databse path mein se kaunse key ko fetch karna
+    - secretKey: type
+      remoteRef:
+        key: argocdreposecrets
+        property: type
+    - secretKey: password
+      remoteRef:
+        key: argocdreposecrets
+        property: password

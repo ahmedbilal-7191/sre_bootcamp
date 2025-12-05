@@ -3,8 +3,9 @@ from flask import jsonify
 from marshmallow import ValidationError
 from app.utils.error_helpers import format_error_response
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
-from app.utils.custom_errors import DuplicateError,NotFoundError
+from app.utils.custom_errors import DuplicateError, NotFoundError
 logger = logging.getLogger(__name__)
+
 
 def register_error_handlers(app):
 
@@ -49,3 +50,4 @@ def register_error_handlers(app):
     def handle_internal_error(err):
         logger.exception("Internal server error")
         return jsonify(format_error_response("Internal server error")), 500
+    

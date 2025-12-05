@@ -25,3 +25,4 @@ helm-charts/
 Vagrantfile
 provision.sh
 .pytest_cache
+external-secrets/

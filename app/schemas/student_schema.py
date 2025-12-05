@@ -1,12 +1,14 @@
 from app.extensions import ma
 from app.models.student import Student
-from marshmallow import validates, ValidationError, fields,validate
+from marshmallow import validates, ValidationError, fields, validate
+
 
 class StudentSchema(ma.SQLAlchemyAutoSchema):
     name = fields.String(required=True, validate=validate.Length(min=2, max=100))
     age = fields.Integer(required=True, validate=validate.Range(min=5, max=100))
     grade = fields.String(required=True, validate=validate.Length(min=1, max=20))
     email = fields.Email(required=True)
+
     class Meta:
         model = Student
         load_instance = True      # Deserialize into model instances
@@ -21,3 +23,4 @@ class StudentSchema(ma.SQLAlchemyAutoSchema):
             raise ValidationError("Name cannot be empty or whitespace")
         if any(char.isdigit() for char in value):
             raise ValidationError("Name cannot contain numbers")
+        

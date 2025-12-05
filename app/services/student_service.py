@@ -1,9 +1,10 @@
 import logging
 from app.extensions import db
 from app.models.student import Student
-from app.utils.custom_errors import DuplicateError,NotFoundError
+from app.utils.custom_errors import DuplicateError, NotFoundError
 
 logger = logging.getLogger(__name__)
+
 
 def create_student(student):
     existing = Student.query.filter_by(email=student.email).first()
@@ -24,6 +25,7 @@ def create_student(student):
         db.session.rollback()
         raise
 
+
 def generate_error():
     raise Exception("This is a generated error for testing purposes")
     
@@ -33,6 +35,7 @@ def get_all_students():
     logger.info("Fetched all students")
     return [{"id": s.id, "name": s.name, "email": s.email} for s in students]
     
+
 def get_student_by_id(student_id: int):
     student = Student.query.get(student_id)
     if not student:
@@ -44,6 +47,7 @@ def get_student_by_id(student_id: int):
         "email": student.email
     }
     
+
 def update_student(student_id: int, data: dict):
     student = Student.query.get(student_id)
     if not student:
@@ -73,6 +77,7 @@ def update_student(student_id: int, data: dict):
         db.session.rollback()
         raise
     
+
 def delete_student(student_id: int):
     student = Student.query.get(student_id)
     if not student:

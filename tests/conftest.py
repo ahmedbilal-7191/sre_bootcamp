@@ -5,6 +5,7 @@ from app.models.student import Student
 from dotenv import load_dotenv
 load_dotenv()
 
+
 @pytest.fixture
 def app():
     app = create_app("testing")  # ensure you add a "testing" config with SQLite in-memory
@@ -14,9 +15,11 @@ def app():
         db.session.remove()
         db.drop_all()
 
+
 @pytest.fixture
 def client(app):
     return app.test_client()
+
 
 @pytest.fixture
 def session(app):

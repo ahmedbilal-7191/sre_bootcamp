@@ -1,6 +1,7 @@
 from app.extensions import db
 from datetime import datetime
 
+
 class Student(db.Model):
     __tablename__ = "students"
 
@@ -15,3 +16,4 @@ class Student(db.Model):
 
     def __repr__(self):
         return f"<Student {self.name}>"
+    

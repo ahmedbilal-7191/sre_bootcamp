@@ -1,0 +1,28 @@
+# TO install ESO use the helm there only define the node selector direcctly for patch
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: postgres-secrets
+  # Replace with the namespace where you want the secret to be created
+  namespace: student-api
+spec:
+  refreshInterval: "1h" # Syncs the secret every hour
+  secretStoreRef:
+    name: vault-backend-cluster
+    kind: ClusterSecretStore
+  target:
+    name: db-secrets # The name of the Kubernetes secret to be created
+    creationPolicy: Owner
+  data:
+    - secretKey: POSTGRES_USER
+      remoteRef:
+        key: database # Path inside the KV engine
+        property: POSTGRES_USER
+    - secretKey: POSTGRES_PASSWORD
+      remoteRef:
+        key: database
+        property: POSTGRES_PASSWORD
+    - secretKey: POSTGRES_DB
+      remoteRef:
+        key: database
+        property: POSTGRES_DB

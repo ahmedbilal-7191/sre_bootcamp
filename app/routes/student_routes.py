@@ -4,19 +4,23 @@ from app.services import student_service
 from app.extensions import db
 from app.utils.helpers import format_response
 
+
 student_bp = Blueprint("students", __name__, url_prefix="/api/v1")
 
 student_schema = StudentSchema()
+
 
 # Healthcheck
 @student_bp.route("/health", methods=["GET"])
 def health_check():
     return jsonify({"status": "ok"}), 200
 
+
 @student_bp.route("/error", methods=["GET"])
 def error_check():
     student_service.generate_error()
     return jsonify({"status": "Error"}), 500
+
 
 @student_bp.route("/students", methods=["POST"])
 def add_student():
@@ -41,7 +45,6 @@ def get_student(student_id):
     return jsonify(response), 200
 
 
-
 @student_bp.route("/students/<int:student_id>", methods=["PUT"])
 def update_student(student_id):
     data = request.get_json()
@@ -55,4 +58,3 @@ def delete_student(student_id):
     result = student_service.delete_student(student_id)
     response = format_response(message=f"Student {result['student_id']} deleted")
     return jsonify(response), 200
-

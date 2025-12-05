@@ -38,7 +38,7 @@ postgresql:
   enabled: true
   fullnameOverride: postgres-db #for this case the postgreshost of deploymen tand this should be same 
   auth:
-    existingSecret: db-secrets
+    existingSecret: db-secrets #for this i think look for url in vault check once
     secretKeys:
       adminPasswordKey: "POSTGRES_PASSWORD"
       userPasswordKey: "POSTGRES_PASSWORD"

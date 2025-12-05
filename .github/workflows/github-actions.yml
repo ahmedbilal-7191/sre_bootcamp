@@ -33,11 +33,11 @@ jobs:
       - name: Installing dependencies
         run: make build-local-api
 
-      # - name: Run tests
-      #   run: make test
+      - name: Run tests
+        run: make test
 
-      # - name: Lint code (flake8)
-      #   run: make lint
+      - name: Lint code (flake8)
+        run: make lint
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -97,7 +97,7 @@ jobs:
 
 
 # name: GitHub Actions Demo
-# run-name: ${{ github.actor }} is testing out GitHub Actions 🚀
+# run-name: ${{ github.actor }} is testing out GitHub Actions 
 # on:
 #   push:
 #     branches:

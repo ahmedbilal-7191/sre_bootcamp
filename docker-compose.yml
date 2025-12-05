@@ -1,5 +1,4 @@
 services:
-
   backend:
     build: .
     container_name: backend_container
@@ -15,7 +14,6 @@ services:
         condition: service_healthy
       migrate:
         condition: service_completed_successfully
-    
   migrate:
     build:
       context: .
@@ -32,7 +30,6 @@ services:
     restart: "no"
     networks:
       - appnet
-
   db:
     image: postgres:latest
     container_name: postgres_db
@@ -53,10 +50,8 @@ services:
     networks:
       - appnet
     restart: always
-
 volumes:
   pg-data:
-
 networks:
   appnet:
     driver: bridge

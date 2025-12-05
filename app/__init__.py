@@ -1,12 +1,14 @@
 import logging
 from flask import Flask, request, Response
-from prometheus_client import generate_latest, CONTENT_TYPE_LATEST, REGISTRY
-from .extensions import db, migrate, ma,REQUEST_COUNT, REQUEST_LATENCY, get_prometheus_registry
+from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
+from .extensions import db, migrate, ma, REQUEST_COUNT, REQUEST_LATENCY, get_prometheus_registry
 from .logging_config import setup_logging
 from .errors import register_error_handlers
 from .routes import student_bp
 from config import config
-import os, time
+import os
+import time
+
 
 def create_app(config_name=None):
     setup_logging()
@@ -42,7 +44,6 @@ def create_app(config_name=None):
     if app.config.get("AUTO_CREATE_TABLES"):
         with app.app_context():
             db.create_all()
-
     
     @app.before_request
     def suppress_log_for_probes():

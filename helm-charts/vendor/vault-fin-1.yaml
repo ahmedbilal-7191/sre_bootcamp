@@ -12,9 +12,9 @@ server:
   standalone:
     enabled: false
 
-  # ---------------------------
+
   # TLS Certificate Mount
-  # ---------------------------
+
   extraEnvironmentVars:
     VAULT_CACERT: /vault/tls/ca.crt
     VAULT_TLSCERT: /vault/tls/tls.crt
@@ -32,18 +32,18 @@ server:
       mountPath: /vault/tls
       readOnly: true
 
-  # ---------------------------
+ 
   # Storage Configuration (Raft)
-  # ---------------------------
+
   dataStorage:
     enabled: true
     size: 500Mi
     storageClass: "csi-hostpath-sc"
     mountPath: "/vault/data"
 
-  # ---------------------------
+
   # HA Mode (Raft) with TLS
-  # ---------------------------
+
   ha:
     enabled: true
     raft:

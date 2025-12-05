@@ -3,6 +3,7 @@ import sys
 import os
 import json
 
+
 class JSONFormatter(logging.Formatter):
     
     def format(self, record):
@@ -18,7 +19,7 @@ class JSONFormatter(logging.Formatter):
         return json.dumps(log_record)
     
 
-#Trying latest final
+# Trying latest final
 def setup_logging():
     log_level = os.getenv("LOG_LEVEL", "INFO").upper()
     json_logs = os.getenv("JSON_LOGS", "true").lower() == "true"
@@ -37,4 +38,3 @@ def setup_logging():
     root_logger.handlers = []  # avoid duplicates
     root_logger.setLevel(getattr(logging, log_level, logging.INFO))
     root_logger.addHandler(handler)
-
