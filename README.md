@@ -1,6 +1,4 @@
-﻿# sre_bootcamp
-
-SRE Bootcamp – From Local to Production (Student CRUD REST API)
+## SRE Bootcamp – From Local to Production (Student CRUD REST API)
 
 This repository is part of the SRE Bootcamp – Part One: From Local to Production, where we build, containerize, deploy, and observe a production-grade microservice.
 The journey begins by developing a simple REST API and evolves step-by-step into a fully automated and observable production deployment using:
@@ -23,22 +21,7 @@ Dashboards & Alerts
 
 The goal is to learn real-world SRE workflows by building everything from scratch.
 
------------------------------------------------------------------------------------------------------------------- 
-Milesstone - 1
-
-📘 Functional Requirements
-
-The API supports the following operations:
-
-Create a student
-
-Retrieve all students
-
-Retrieve a student by ID
-
-Update student details
-
-Delete a student
+Features are above or add some more
 
 📦 Tech Stack
 Component	Technology
@@ -54,125 +37,236 @@ WSGI Server	gunicorn
 Testing	pytest, pytest-flask
 Linting	pylint, flake8
 
-📁 Project Structure
-student-api/
-│
-├── app/
-│   ├── __init__.py
-│   ├── models/
-│   ├── routes/
-│   ├── schemas/
-│   ├── config.py
-│   └── logs/
-│
-├── migrations/
-├── tests/
-├── postman_collection.json
-├── requirements.txt
-├── Makefile
-├── .env.example
-└── README.md
+------------------------------------------------------------------------------------------------------------------ 
 
+## Milesstone - 1
 
-This structure supports clean separation of concerns and scales well as we later introduce Docker, CI/CD, K8s, Helm, and Observability.
+Quick Start:
 
-⚙️ Environment Configuration
+Prerequisites:
+1.python to run the application 
+2.postgresql DB
 
-All configuration is passed through environment variables (Twelve-Factor compliant).
-
-Example .env.example:
-
-FLASK_ENV=development
-DATABASE_URL=postgresql://username:password@localhost:5432/studentdb
-PORT=5000
-LOG_LEVEL=INFO
 
 Local Setup Instructions:
+
 1. Clone the repository
 git clone https://github.com/<your-username>/sre-bootcamp-students-api.git
 cd sre-bootcamp-students-api
 
-2. Create a virtual environment
+
+2.Create local .env by copying:
+
+cp .env.example .env
+
+3. Create a virtual environment
 python3 -m venv venv
 source venv/bin/activate      # Linux/Mac
-venv\Scripts\activate         # Windows
+venv\Scripts\activate         # Windows	
 
-3. Install dependencies
-pip install -r requirements.txt
+Step 3 — Install Dependencies
 
-4. Set up the database
+Instead of manually installing dependencies using pip install,
+you can simply run the Make target:
 
-Ensure PostgreSQL is running locally.
+make build-local-api
 
-Create a database:
-
-createdb studentsdb
+Runs:
+python -m pip install --upgrade pip
+pip install --no-cache-dir -r requirements.dev.txt
 
 5. Run migrations
+
 make migrate
 
 Runs:
-
 flask db init
 flask db migrate
 flask db upgrade
 
 6. Start the API
 Option A — Flask Dev Server
+
 make run
 
+Runs:
+
+python run.py
+
 Option B — Gunicorn (production style)
+
+make run-gunicorn:
+
+Runs:
 gunicorn --bind 0.0.0.0:8000 "app:create_app()"
-
-
-
-
-Create local .env by copying:
-
-cp .env.example .env
-
-🗄️ Database Migrations
-
-Initialize (first time only):
-
-flask db init
-
-
-Generate migration:
-
-flask db migrate -m "create student table"
-
-
-Apply migration:
-
-flask db upgrade
-
-▶️ Running the Application
-Run via Flask
-flask run
-
-Run via Gunicorn (production-like)
-gunicorn "app:create_app()"
 
 🧰 Makefile Commands
 Command	Description
 make run	Start Flask API
+make run-gunicorn Start Gunicorn server for API
 make test	Run test suite
 make migrate	Generate migration
 make upgrade	Apply migrations
 make lint	Run flake8 & pylint
-make format	Auto-format code
-📚 API Endpoints (Versioned)
-Healthcheck
-GET /healthcheck
 
-CRUD
-Method	Endpoint	Description
-POST	/api/v1/students	Create a student
-GET	/api/v1/students	Get all students
-GET	/api/v1/students/<id>	Get student by ID
-PUT	/api/v1/students/<id>	Update student
-DELETE	/api/v1/students/<id>	Delete student
+
+
+📁 Project Structure
+.
+├── .github/
+│   └── workflows/              # CI/CD workflow definitions (GitHub Actions)
+│
+├── app/
+│   ├── models/                 # SQLAlchemy models
+│   │   ├── __init__.py
+│   │   └── student.py
+│   │
+│   ├── routes/                 # API route handlers
+│   │   ├── __init__.py
+│   │   └── student_routes.py
+│   │
+│   ├── schemas/                # Marshmallow schemas for validation/serialization
+│   │   ├── __init__.py
+│   │   └── student_schema.py
+│   │
+│   ├── services/               # Service layer / business logic
+│   │   ├── __init__.py
+│   │   └── student_service.py
+│   │
+│   ├── utils/                  # Utility modules
+│   │   ├── __init__.py
+│   │   ├── custom_errors.py
+│   │   ├── error_helpers.py
+│   │   ├── helpers.py
+│   │
+│   ├── errors.py               # Centralized error handlers
+│   ├── extensions.py           # DB, Marshmallow, JWT, Logger initialization
+│   ├── logging_config.py       # Logging configuration
+│
+│   ├── __init__.py             # Flask application factory
+│
+├── migrations/                 # Alembic migrations
+│
+├── tests/                      # Unit tests
+│
+├── .env.example                # Example environment variables template
+├── .gitignore
+├── Makefile                    # Make targets for build, linting, testing, docker, etc.
+├── README.md                   # Project documentation
+├── config.py                   # App configuration (dev/prod/test)
+├── gunicorn.conf.py            # Gunicorn production config
+├── requirements.dev.txt        # Development dependencies (flake8, pytest, black)
+├── requirements.txt            # Production dependencies
+└── run.py                      # Entry point (Flask dev server)
+
+This structure supports clean separation of concerns and scales well as we later introduce Docker, CI/CD, K8s, Helm, and Observability.
+
+Architecture Overview:This project is a modular and scalable REST API Web Server built using Flask, following clean architecture principles.
+The system is organized into clear layers that separate responsibilities, making the codebase maintainable, testable, and extensible.
+
+          ┌──────────────────────────────┐
+          │          Client / UI         │
+          │  (Postman, curl, frontend)   │
+          └───────────────┬──────────────┘
+                          │ HTTP Requests
+                          ▼
+           ┌──────────────────────────────────┐
+           │        Flask REST API            │
+           │            (run.py)              │
+           └─────────────────┬────────────────┘
+                             │ Routes (API Layer)
+                             ▼
+         ┌────────────────────────────────────────┐
+         │            Routes Layer                │
+         │   app/routes/student_routes.py         │
+         │ - Defines API versioning (/api/v1)     │
+         │ - Maps HTTP methods → controller logic │
+         └─────────────────┬──────────────────────┘
+                           │ Calls
+                           ▼
+         ┌────────────────────────────────────────┐
+         │          Service Layer                 │
+         │    app/services/student_service.py     │
+         │ - Business logic                       │
+         │ - DB operations via SQLAlchemy         │
+         │ - Validation orchestration             │
+         └─────────────────┬──────────────────────┘
+                           │ Uses Models
+                           ▼
+         ┌────────────────────────────────────────┐
+         │               Data Layer               │
+         │            app/models/student.py       │
+         │ - SQLAlchemy ORM Model                 │
+         │ - Handles persistence                  │
+         └─────────────────┬──────────────────────┘
+                           │
+                           ▼
+         ┌────────────────────────────────────────┐
+         │            PostgreSQL / SQLite         │
+         │         (via SQLAlchemy ORM)           │
+         └────────────────────────────────────────┘
+
+
+🗄️ Database Table: students
+
+The REST API stores student records in a SQL database using SQLAlchemy ORM.
+
+The table is created using the following model:
+
+📌 Students Table Schema
+| Column       | Type        | Constraints                         | Description                        |
+| ------------ | ----------- | ----------------------------------- | ---------------------------------- |
+| `id`         | Integer     | Primary Key, Auto-increment         | Unique identifier for each student |
+| `name`       | String(100) | Required, Cannot contain digits     | Student’s full name                |
+| `age`        | Integer     | Required, Range(5–100)              | Student’s age                      |
+| `grade`      | String(20)  | Required                            | Class or grade of the student      |
+| `email`      | String(120) | Required, Unique, Valid email       | Student’s email address            |
+| `created_at` | DateTime    | Default = timestamp at row creation | When the record was created        |
+| `updated_at` | DateTime    | Auto-updated on modification        | When the record was last updated   |
+
+
+The API supports the following operations:
+
+🚀 Supported API Endpoints (v1)
+
+| Method | Endpoint                | Description             |
+| ------ | ----------------------- | ----------------------- |
+| POST   | `/api/v1/students`      | Create a new student    |
+| GET    | `/api/v1/students`      | Get all students        |
+| GET    | `/api/v1/students/<id>` | Get a student by ID     |
+| PUT    | `/api/v1/students/<id>` | Update a student record |
+| DELETE | `/api/v1/students/<id>` | Delete a student record |
+| GET    | `/healthcheck`          | Health check endpoint   |
+
+
+📬 Postman Collection
+
+Import postman_collection.json to test the API.
+
+
+Example Request:
+
+Example Response:
+
+
+
+⚙️ Environment Configuration
+
+All configuration is passed through environment variables, following 12-Factor App standards.
+
+Below is the list of environment variables used by the application:
+
+| Variable Name       | Description                                | Example Value |
+| ------------------- | ------------------------------------------ | ------------- |
+| `FLASK_ENV`         | Flask environment mode                     | `development` |
+| `POSTGRES_USER`     | PostgreSQL username                        | `db_user`     |
+| `POSTGRES_PASSWORD` | PostgreSQL password                        | `db_password` |
+| `POSTGRES_DB`       | Name of the database                       | `db_name`     |
+| `POSTGRES_HOST`     | Database host (service name in Docker/K8s) | `db_host`     |
+| `POSTGRES_PORT`     | Port for PostgreSQL                        | `5432`        |
+| `LOG_LEVEL`         | Application logging level                  | `INFO`        |
+
+
 
 🧪 Testing
 
@@ -184,12 +278,10 @@ pytest --cov=app
 Tests include:
 
 Healthcheck
-
 CRUD endpoints
-
 Input validation
-
 DB interactions
+
 
 🧾 Logging
 
@@ -198,13 +290,10 @@ All logs use JSON format:
 {
   "timestamp": "2025-01-10T12:45:20Z",
   "level": "INFO",
+  "logger":svcname,
   "message": "Student created",
-  "student_id": 7
+  "log_type": "application"
 }
-
-📬 Postman Collection
-
-Import postman_collection.json to test the API.
 
 ------------------------------------------------------------------------
 
@@ -222,7 +311,7 @@ make docker-build VERSION=1.0.0
 
 Run the API Container
 Without Makefile:
-docker run -p 8080:8080 \
+docker run -p 5000:5000 \
   -e DB_HOST=localhost \
   -e DB_USER=root \
   -e DB_PASS=password \
@@ -380,7 +469,10 @@ api-start:
     make db-migrate
     docker compose up -d api
 
-
+do the migration -m required by using the image and run the commad directly by migrate:
+	docker compose run --rm backend flask db migrate
+	docker compose run --rm backend flask db upgrade seperated or single 
+	
 -------------------------------------------
 
 🚀 Milestone 4 – Continuous Integration (CI) Pipeline Setup
@@ -1902,6 +1994,7 @@ kubectl port-forward svc/grafana 3000:80 -n observability
 
 
 Open: http://localhost:3000
+
 
 
 
