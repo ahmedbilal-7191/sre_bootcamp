@@ -1,0 +1,20 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: my-backend-servicemonitor
+  # namespace: observability
+  namespace: {{ .Release.Namespace }} #Make sure that promtheus operator watches all ns
+  labels:
+    # This label is critical for the Prometheus Operator to find this ServiceMonitor
+    release: prometheus
+    app: backend
+spec:
+  selector:
+    matchLabels:
+      app: backend # This selects your application's Service
+  endpoints:
+  - port: http-metrics    # Refers to the named port in your Service spec v.v imp check again
+    path: /metrics
+  namespaceSelector: # This tells the ServiceMonitor to look in specific namespaces
+    matchNames:
+      - {{ .Release.Namespace }}

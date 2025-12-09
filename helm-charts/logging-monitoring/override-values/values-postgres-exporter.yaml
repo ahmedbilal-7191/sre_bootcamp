@@ -33,7 +33,7 @@ service:
 # ServiceMonitor for Prometheus Operator (kube-prometheus-stack)
 serviceMonitor:
   enabled: true
-  namespace: observability
+  namespace: {{ .Release.Namespace }} #observability
   interval: 30s
   scrapeTimeout: 10s
   labels:

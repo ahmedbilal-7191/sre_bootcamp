@@ -11,6 +11,11 @@ build-local-api:
 	python -m pip install --upgrade pip
 	pip install --no-cache-dir -r requirements.dev.txt
 	@echo "Local API build done..."
+
+run-gunicorn:
+	@echo "Starting API using Gunicorn..."
+	gunicorn -w 2 -b 0.0.0.0:5000 run:app
+
 run-local-api:
 	@echo "Running local API..."
 # 	venv\Scripts\activate

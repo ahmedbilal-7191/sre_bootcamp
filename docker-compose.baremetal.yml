@@ -16,8 +16,8 @@ services:
   backend-1:
     build: .
     container_name: backend_container_1
-    ports:
-      - "8081:5000"
+    # ports:
+    #   - "8081:5000"
     env_file:
       - .env
     restart: always
@@ -31,8 +31,8 @@ services:
   backend-2:
     build: .
     container_name: backend_container_2
-    ports:
-      - "8082:5000"
+    # ports:
+    #   - "8082:5000"
     env_file:
       - .env
     restart: always
