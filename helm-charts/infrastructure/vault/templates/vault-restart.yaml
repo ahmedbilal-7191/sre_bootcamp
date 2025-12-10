@@ -8,9 +8,7 @@ metadata:
 spec:
   groups:
 
-  # ---------------------------------------------------------
-  # 4. Restart Alerts for DB / ArgoCD / Vault
-  # ---------------------------------------------------------
+  # Restart Alerts for DB / ArgoCD / Vault
   - name: service-restart-alerts
     rules:
       - alert: VaultRestarted

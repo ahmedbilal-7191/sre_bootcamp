@@ -23,7 +23,7 @@ spec:
           summary: "High error rate detected in the last 10 minutes"
           description: |
             5xx error rate is greater than 5%.
-            Current: {{ $value | humanizePercentage }}
+            Current: {{`{{ $value | humanizePercentage }}`}}
 
 
   # Latency Alerts (P90 / P95 / P99)
@@ -39,9 +39,9 @@ spec:
           severity: warning
           team: devops
         annotations:
-          summary: "High P90 request latency for {{ $labels.job }}"
+          summary: "High P90 request latency for {{`{{ $labels.job }}`}}"
           description: |
-            P90 latency > 0.5s for 10 minutes. Current: {{ $value }}s
+            P90 latency > 0.5s for 10 minutes. Current: {{`{{ $value }}`}}s
 
       - alert: HighRequestLatencyP95
         expr: |
@@ -53,9 +53,9 @@ spec:
           severity: page
           team: devops
         annotations:
-          summary: "High P95 request latency for {{ $labels.job }}"
+          summary: "High P95 request latency for {{`{{ $labels.job }}`}}"
           description: |
-            P95 latency > 1s for 5 minutes. Current: {{ $value }}s
+            P95 latency > 1s for 5 minutes. Current: {{`{{ $value }}`}}s
 
       - alert: HighRequestLatencyP99
         expr: |
@@ -67,7 +67,7 @@ spec:
           severity: critical
           team: devops
         annotations:
-          summary: "High P99 request latency for {{ $labels.job }}"
+          summary: "High P99 request latency for {{`{{ $labels.job }}`}}"
           description: |
-            P99 latency > 2s for 2 minutes. Current: {{ $value }}s
+            P99 latency > 2s for 2 minutes. Current: {{`{{ $value }}`}}s
 

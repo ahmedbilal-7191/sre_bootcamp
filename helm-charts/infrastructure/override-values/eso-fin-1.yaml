@@ -1,6 +1,8 @@
 # Namespace where ESO will run
 namespace: external-secrets
-
+global:
+  nodeSelector:
+    type: dependent_services
 # Ensure CRDs are installed with the release
 installCRDs: true
 

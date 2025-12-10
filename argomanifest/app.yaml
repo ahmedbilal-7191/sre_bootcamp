@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: test
+  name: backend-argo-app
   namespace: argocd # Application resources are typically in the Argo CD namespace
 spec:
   project: default # Use the 'default' project or specify your own
@@ -18,7 +18,7 @@ spec:
   destination:
     server: "https://kubernetes.default.svc" # Deploys to the same cluster Argo CD is running in
     # FIX: Ensure this namespace matches your chart's hardcoded namespace logic (e.g., if your chart uses .Release.Name, this should be 'private-helm-app')
-    namespace: argocd # or private-helm-app
+    namespace: student-api # or private-helm-app
   # Configuration for Argo CD's deployment behavior
   syncPolicy:
     automated:
