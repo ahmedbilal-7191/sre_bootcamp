@@ -298,8 +298,52 @@ All logs use JSON format:
 ------------------------------------------------------------------------
 
 🚀 Milestone 2 – Dockerization & Image Optimization
-
+can be removed 
 This milestone focuses on running the API using Docker, creating a multi-stage Dockerfile, injecting environment variables at runtime, optimizing image size, and tagging images using semantic versioning (semver).
+
+This milestone focuses on packaging the REST API into a Docker image using a multi-stage Dockerfile, running the application inside containers, injecting runtime environment variables, optimizing for small image size, and tagging images using semantic versioning (semver).
+Docker and Docker Compose are required to build and run the containerized API.
+
+✅ Prerequisites
+
+Before starting with Dockerization, ensure the following tools are installed on your machine:
+
+1. Docker Engine
+
+Follow the official production-grade installation steps:
+
+# Add Docker GPG key and repository (Ubuntu)
+sudo apt update
+sudo apt install -y ca-certificates curl gnupg
+
+sudo install -m 0755 -d /etc/apt/keyrings
+sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+sudo chmod a+r /etc/apt/keyrings/docker.asc
+
+echo \
+"Types: deb
+URIs: https://download.docker.com/linux/ubuntu
+Suites: $(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}")
+Components: stable
+Signed-By: /etc/apt/keyrings/docker.asc" |
+sudo tee /etc/apt/sources.list.d/docker.sources > /dev/null
+
+sudo apt update
+sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+
+Verify installation:
+
+docker --version
+docker compose version
+
+2. Add your user to the Docker group
+
+(So you can run Docker without sudo)
+
+sudo usermod -aG docker $USER
+newgrp docker
+
 
 🐳 Docker Usage Instructions
 Build Docker Image
@@ -550,6 +594,8 @@ The CI pipeline simply calls these targets instead of duplicating logic.
 
 🖥️ Self-Hosted GitHub Runner (Local Machine)
 
+To setup the self hosted runners: https://docs.github.com/en/actions/how-tos/manage-runners/self-hosted-runners/add-runners
+
 This pipeline is executed on a self-hosted runner installed on your local system.
 This runner is responsible for:
 
@@ -786,10 +832,12 @@ Nginx config (nginx.conf)
 
 Any additional environment or service configs
 
-
-
 -------------------
 📌 Milestone 6 — Setup Kubernetes Cluster
+
+Prerequisites:
+install the minikube from https://minikube.sigs.k8s.io/docs/start/?arch=%2Flinux%2Fx86-64%2Fstable%2Fbinary+download 
+install the kubectl from https://kubernetes.io/docs/tasks/tools/
 
 This milestone focuses on creating a multi-node Kubernetes cluster using Minikube and preparing it for future production-like deployments.
 The cluster will be used to run the application, database, and dependent services in isolated node groups, similar to a real production topology.
@@ -889,7 +937,22 @@ Database Pods → Node B → Volumes also on Node B
 Application Pods → Node A → Volumes on Node A
 
 This prevents cross-node storage issues.
+
+volumeBindingMode: WaitForFirstConsumer
+
+This ensures:
+
+Kubernetes does NOT create the PV immediately
+
+It waits until the Pod is scheduled
+
+Then it provisions the PV on the same node (or topology zone) where the Pod is placed
+
+Prevents scheduling failures such as:
+Pod stuck in Pending due to PV in a different zone/node.
+
 ------------------------------------
+Start  working on readme from here
 Milestone 7 – Deploy REST API & Dependent Services in Kubernetes
 ✅ Objective
 
@@ -1057,36 +1120,246 @@ Ensure databases are functioning and init-migrations ran successfully.
 1. Start 3-node Minikube
 
 (Already completed)
-
-2. Apply namespaces
-kubectl apply -f k8s/namespaces/
-
+create 3 namespace student-api ,external-secrets,vault then 
 3. Deploy Vault
-kubectl apply -f k8s/vault/
+kubectl apply -f k8s-manifests/vault/
 
-4. Deploy ESO + SecretStore
-kubectl apply -f k8s/eso/
+if want the vault to have the https certs 
+# 1️⃣ Create the CA private key
+openssl genrsa -out ca.key 4096
 
-5. Deploy Database (Node B)
-kubectl apply -f k8s/database/database.yml
+# 2️⃣ Create the CA certificate
+openssl req -x509 -new -nodes -key ca.key -sha256 -days 3650 \
+  -out ca.crt -subj "/C=IN/ST=Karnataka/L=Bangalore/O=VaultCA/CN=Vault Root CA"
+Now generate the Vault key and CSR (Certificate Signing Request):
 
-6. Deploy Application (Node A)
-kubectl apply -f k8s/application/application.yml
+openssl genrsa -out tls.key 2048
+openssl req -new -key tls.key -out vault.csr -config vault-cert.cnf
 
-7. Verify Services
+
+Sign it with your CA:
+
+openssl x509 -req -in vault.csr -CA ca.crt -CAkey ca.key -CAcreateserial \
+  -out tls.crt -days 3650 -sha256 -extfile vault-cert.cnf -extensions req_ext
+
+certs$ ls
+ca.crt  ca.key  ca.srl  tls.crt  tls.key  vault-cert.cnf  vault.csr
+
+kubectl -n vault create secret generic vault-tls \
+  --from-file=tls.crt=tls.crt \
+  --from-file=tls.key=tls.key \
+  --from-file=ca.crt=ca.crt
+
+  once the cert secrets is created then do
+
+  Deploy Vault
+kubectl apply -f k8s-manifests/vault/
+
+
+exec into vault-0 vault then run
+vault operator init
+or if want to use only 1 key 
+
+vault operator init -key-shares=1 -key-threshold=1
+
+get those keys and unseal it 
+after this directly run unseal for the vault-1,vault-2 also they will join auto since retryjoin
+then exec into vault-0 pod we get vault operator raft list-peers we get all 3 followers and leaders
+
+then enable k8s auth :
+
+# Enable Kubernetes authentication
+vault auth enable kubernetes
+
+
+
+# Configure Kubernetes auth with proper paths
+vault write auth/kubernetes/config \
+  kubernetes_host="https://$KUBERNETES_SERVICE_HOST:$KUBERNETES_SERVICE_PORT" \
+  token_reviewer_jwt="$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)" \
+  kubernetes_ca_cert=@/var/run/secrets/kubernetes.io/serviceaccount/ca.crt \
+  issuer="https://kubernetes.default.svc.cluster.local"
+
+
+then create a secretengine  path using secret only path of kv v2 using this cmd:
+
+vault secrets enable -path=secret kv-v2
+
+then create a policy for the role to be used by the eso think of it like a ACL's:
+
+vault policy write eso-policy - << EOF
+path "secret/data/*" {
+  capabilities = ["read"]
+}
+
+path "secret/metadata/*" {
+  capabilities = ["list"]
+}
+EOF
+
+verify:
+vault policy list
+
+
+then attach this policy to this role we are creating
+vault write auth/kubernetes/role/external-secrets-operator \
+  bound_service_account_names=vault-auth \
+  bound_service_account_namespaces=external-secrets \
+  policies=eso-policy \
+  ttl=1h
+
+
+vault kv put secret/database POSTGRES_USER="db_user" POSTGRES_PASSWORD="db_password" POSTGRES_DB="name_db"
+
+5. Deploy ESO + SecretStore
+kubectl apply -f k8s-manifests/eso/
+
+helm template external-secrets \
+  external-secrets/external-secrets \
+  -n external-secrets \
+  --set installCRDs=true \
+  --set nodeSelector.type=dependencies \
+  --set webhook.nodeSelector.type=dependencies \
+  --set certController.nodeSelector.type=dependencies \
+  > k8s-manifests/eso/external-secrets.yaml
+
+deploy it using helm only for manifests make a copy into a file then apply if from file in the external-secrets namespace 
+
+kubectl create ns external-secrets
+
+
+mount a secret for ca crt eso :
+
+kubectl create secret generic vault-ca \
+  --from-file=ca.crt=ca.crt \
+  -n external-secrets
+
+then apply eso/store-secret.yaml - it has secret store and the external secrets yaml whihch will sync secrets and apply in the student-api namespace
+
+also if not want to use the https then dont include the volume mount in the vault config and the in the cluster store use http not https for url and dont mount the ca cert for the clustrer store too 
+7. Deploy Database (Node B- already having node selector to be oon database node)
+kubectl apply -f k8s-manifests/db.yaml
+
+8. Deploy Application (Node A)
+kubectl apply -f k8s-manifests/application.yaml
+
+9. Verify Services
 kubectl get pods -A
 kubectl get svc -A
 
-8. Test API
+10. Test API
 http://<minikube-ip>:32000/health
 
+Here is the second Options:
+This milestone focuses on deploying the REST API and its dependent services (database, migrations, secrets, configs) on Kubernetes.
+All Kubernetes manifests, namespaces, ConfigMaps, ESO (External Secrets Operator), and Vault-based secrets must be created and deployed using standard YAML manifests.
 
+📁 Repository Structure
+
+All Kubernetes manifests must be committed inside the same repository:
+
+k8s/
+ ├── application/
+ │    └── application.yml
+ ├── database/
+ │    └── database.yml
+ ├── eso/
+ │    ├── external-secret.yml
+ │    ├── secret-store.yml
+ │    └── vault-config.yml
+ ├── vault/
+ │    ├── deployment.yml
+ │    ├── service.yml
+ │    └── policies.hcl
+ ├── namespaces/
+ │    └── student-api-namespace.yml
+ └── README.md
+
+
+Each component has a single manifest file containing all required resources.
+
+🏷 Namespaces
+
+All application and database resources must be deployed inside:
+
+student-api
+
+You can create it using:
+
+🐳 Application Component (application.yml)
+
+The application manifest includes:
+
+Namespace
+ConfigMap
+Deployment havooing init container to run the db migrations
+Service
+
+Environment variables should be provided using:
+
+✔ ConfigMaps — non-sensitive values such as API config, ports, debug flags
+✔ External Secrets (ESO) — sensitive values like DB credentials, token, password
+
+🛢 Database Component (database.yml)
+
+The database manifest contains:
+
+Namespace
+
+PVC
+StorageClass reference
+StatefulSet 
+Service
+
+DB migrations must run before the API container starts.
+
+Your app deployment must include:
+
+initContainers:
+  - name: db-migrations
+    image: my-api-migration-image:1.0.0
+    command: ["sh", "-c", "python migrate.py"]
+    envFrom:
+      - secretRef:
+          name: db-creds
+
+
+This ensures migrations run once before the main application starts.
+
+
+Wait for pods:
+
+kubectl get pods -n student-api
+
+🧪 Testing the API (Postman)
+
+Once all pods are running and the service is exposed, test the API:
+
+curl -i http://<YOUR-IP>:<PORT>/health
+
+
+Expected response:
+
+HTTP/1.1 200 OK
+
+
+After this, use the Postman collection included in the repository to test:
+
+Create Student
+
+Get Student
+
+Update Student
+
+Delete Student
+
+All endpoints must return 200 OK.
 
 
 ---------------------------
 Milestone 8 – Deploy REST API & Dependent Services Using Helm Charts
-🎯 Objective
 
+🎯 Objective
 In this milestone, we transition from raw Kubernetes manifests to Helm-based deployments for the REST API, database, Vault, and other dependent services.
 Helm allows us to package, version, parameterize, and reuse deployments in a clean and production-friendly manner.
 
@@ -1099,10 +1372,6 @@ Best practices for chart packaging
 Using subcharts and dependency management
 
 Deploying all services using Helm instead of raw YAML
-
-
-
-
 
 Helm Best Practices Followed
 ✔ Templates split into reusable helper files
@@ -1147,14 +1416,13 @@ nodeSelector:
 ✔ ESO + Vault integration parameterized
 
 ExternalSecret template uses values like:
-
 vault:
   path: "student-api/"
   secretKeys:
     username: db-user
     password: db-pass
 
-✔ DB migrations handled via Helm hooks or initContainers
+✔ DB migrations handled via initContainers
 
 Your API Helm chart includes:
 
@@ -1164,13 +1432,12 @@ initContainers:
     command: ["sh", "-c", "python manage.py run_migrations"]
 
 🚀 Deployment Workflow Using Helm
-1. Add dependency charts (optional)
+1. here in out case we have already helm manifest files for the managed chart locally present to first deploy the vault if we want the ca certs etc the process is same a sabove for the k8s manifest deployment craeating a secrets then applying as a ca to (aslo if dont want the https change config to not to use the not to mount from the secrets )the helm charts then depploy the vault using helm in the helm charts/infrastructure/vault but its override values.yaml is in overridee-values/vault-fin-1 here serverTelemetry:
+  prometheusRules:
+    enabled: true is true disable it if you dont have the logging and monitoring setup and its relaveant crds
+then do the same steps like adding the unsealing etc same as did for the k8s-manifests then deploy the eso if using the  https deploy the secret sfor the cas ame as aboce k8s-manifest then deploy the eso in the infrastructure/external-serets file usinf a override file in the override-values/eso-fin-1.yaml
 
-If using community charts:
-
-helm repo add hashicorp https://helm.releases.hashicorp.com
-helm repo add bitnami https://charts.bitnami.com/bitnami
-helm repo add external-secrets https://charts.external-secrets.io
+#start working from here
 
 
 For local copies (recommended), they are already inside helm/.
@@ -1994,6 +2261,7 @@ kubectl port-forward svc/grafana 3000:80 -n observability
 
 
 Open: http://localhost:3000
+
 
 
 
