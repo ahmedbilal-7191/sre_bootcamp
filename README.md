@@ -1,117 +1,138 @@
 ## SRE Bootcamp – From Local to Production (Student CRUD REST API)
+Built as part of an intensive SRE Bootcamp, this repository demonstrates a complete production engineering workflow, where a microservice is developed, containerized, deployed, and fully observed using industry-standard SRE and DevOps practices.The project progresses through multiple stages of the production lifecycle using:
 
-This repository is part of the SRE Bootcamp – Part One: From Local to Production, where we build, containerize, deploy, and observe a production-grade microservice.
-The journey begins by developing a simple REST API and evolves step-by-step into a fully automated and observable production deployment using:
+- Containers
+- CI/CD pipelines
+- Bare-metal deployments
+- Kubernetes
+- Helm Charts
+- GitOps with ArgoCD
+- Observability stack (Prometheus, Loki, Grafana, Alertmanager)
+- Dashboards & Alerts
 
-Containers
+Tech Stack(Application)
 
-CI/CD pipelines
+| Component   | Technology           |
+| ----------- | -------------------- |
+| Language    | Python 3             |
+| Framework   | Flask                |
+| ORM         | SQLAlchemy           |
+| DB          | PostgreSQL           |
+| Migrations  | Flask-Migrate        |
+| Validation  | Marshmallow          |
+| Logging     | python-json-logger   |
+| Metrics     | prometheus-client    |
+| WSGI Server | gunicorn             |
+| Testing     | pytest, pytest-flask |
+| Linting     | pylint, flake8       |
 
-Bare-metal deployments
+DevOps & SRE Tooling
 
-Kubernetes
-
-Helm Charts
-
-GitOps with ArgoCD
-
-Observability stack (Prometheus, Loki, Grafana, Alertmanager)
-
-Dashboards & Alerts
-
-The goal is to learn real-world SRE workflows by building everything from scratch.
-
-Features are above or add some more
-
-📦 Tech Stack
-Component	Technology
-Language	Python 3
-Framework	Flask
-ORM	SQLAlchemy
-DB	PostgreSQL
-Migrations	Flask-Migrate
-Validation	Marshmallow
-Logging	python-json-logger
-Metrics	prometheus-client (used in later stages)
-WSGI Server	gunicorn
-Testing	pytest, pytest-flask
-Linting	pylint, flake8
+- Docker & Docker Compose
+- GitHub Actions CI/CD
+- Kubernetes
+- Helm Charts
+- ArgoCD (GitOps)
+- Prometheus
+- Grafana
+- Loki + Promtail
+- Alertmanager
+- External Secrets Operator
+- Hashicorp Vault
 
 ------------------------------------------------------------------------------------------------------------------ 
 
-## Milesstone - 1
+## Milesstone - 1 Create a simple REST API Webserver
 
-Quick Start:
+This milestone covers setting up the Student CRUD REST API locally using Python, virtual environments, PostgreSQL, migrations, and Makefile automation.
 
-Prerequisites:
-1.python to run the application 
-2.postgresql DB
+## Quick Start:
+
+Prerequisites
+Ensure the following are installed on your system:
+Python 3.x (to run the API)
+pip (Python package manager)
+PostgreSQL (for the database)
 
 
 Local Setup Instructions:
 
-1. Clone the repository
+1.Clone the repository
+```
 git clone https://github.com/<your-username>/sre-bootcamp-students-api.git
 cd sre-bootcamp-students-api
-
+```
 
 2.Create local .env by copying:
-
+```
 cp .env.example .env
+```
+Update values as needed for your system.
 
-3. Create a virtual environment
+3.Create & Activate a Virtual Environment
+Linux / Mac
+```
 python3 -m venv venv
-source venv/bin/activate      # Linux/Mac
-venv\Scripts\activate         # Windows	
+source venv/bin/activate
+```
+Windows
+```
+python -m venv venv
+venv\Scripts\activate
+```
 
-Step 3 — Install Dependencies
-
-Instead of manually installing dependencies using pip install,
-you can simply run the Make target:
-
+4.Install Dependencies (via Makefile)
+Instead of installing manually, use:
+```
 make build-local-api
+```
+This executes:
+- `python -m pip install --upgrade pip`
+- `pip install --no-cache-dir -r requirements.dev.txt`
 
-Runs:
-python -m pip install --upgrade pip
-pip install --no-cache-dir -r requirements.dev.txt
-
-5. Run migrations
-
+5.Run migrations
+```
 make migrate
-
-Runs:
+```
+Which internally runs:
+```
 flask db init
 flask db migrate
 flask db upgrade
+```
 
-6. Start the API
+6.Start the API
 Option A — Flask Dev Server
-
+```
 make run
-
+```
 Runs:
-
+```
 python run.py
-
+```
 Option B — Gunicorn (production style)
-
-make run-gunicorn:
-
+```
+make run-gunicorn
+```
 Runs:
+```
 gunicorn --bind 0.0.0.0:8000 "app:create_app()"
+```
 
-🧰 Makefile Commands
-Command	Description
-make run	Start Flask API
-make run-gunicorn Start Gunicorn server for API
-make test	Run test suite
-make migrate	Generate migration
-make upgrade	Apply migrations
-make lint	Run flake8 & pylint
+## Makefile Commands
+| Command                | Description                    |
+| ---------------------- | ------------------------------ |
+| `make run`             | Start Flask API                |
+| `make run-gunicorn`    | Start API using Gunicorn       |
+| `make test`            | Run test suite                 |
+| `make migrate`         | Generate migrations            |
+| `make upgrade`         | Apply database migrations      |
+| `make lint`            | Run flake8 & pylint            |
+| `make build-local-api` | Install local dev dependencies |
 
 
-
-📁 Project Structure
+## Project Structure
+```
 .
 ├── .github/
 │   └── workflows/              # CI/CD workflow definitions (GitHub Actions)
@@ -158,11 +179,12 @@ make lint	Run flake8 & pylint
 ├── requirements.dev.txt        # Development dependencies (flake8, pytest, black)
 ├── requirements.txt            # Production dependencies
 └── run.py                      # Entry point (Flask dev server)
+```
+This structure supports clean scalability as the project progresses toward Docker, CI/CD, Kubernetes, Helm, ArgoCD, and Observability in later milestones.
 
-This structure supports clean separation of concerns and scales well as we later introduce Docker, CI/CD, K8s, Helm, and Observability.
+## Architecture Overview
+layered design:
 
-Architecture Overview:This project is a modular and scalable REST API Web Server built using Flask, following clean architecture principles.
-The system is organized into clear layers that separate responsibilities, making the codebase maintainable, testable, and extensible.
 
           ┌──────────────────────────────┐
           │          Client / UI         │
@@ -207,13 +229,13 @@ The system is organized into clear layers that separate responsibilities, making
          └────────────────────────────────────────┘
 
 
-🗄️ Database Table: students
+## Database Table: `students`
 
 The REST API stores student records in a SQL database using SQLAlchemy ORM.
 
 The table is created using the following model:
 
-📌 Students Table Schema
+Students Table Schema
 | Column       | Type        | Constraints                         | Description                        |
 | ------------ | ----------- | ----------------------------------- | ---------------------------------- |
 | `id`         | Integer     | Primary Key, Auto-increment         | Unique identifier for each student |
@@ -224,10 +246,7 @@ The table is created using the following model:
 | `created_at` | DateTime    | Default = timestamp at row creation | When the record was created        |
 | `updated_at` | DateTime    | Auto-updated on modification        | When the record was last updated   |
 
-
-The API supports the following operations:
-
-🚀 Supported API Endpoints (v1)
+## Supported API Endpoints (v1)
 
 | Method | Endpoint                | Description             |
 | ------ | ----------------------- | ----------------------- |
@@ -239,7 +258,7 @@ The API supports the following operations:
 | GET    | `/healthcheck`          | Health check endpoint   |
 
 
-📬 Postman Collection
+## Postman Collection
 
 Import postman_collection.json to test the API.
 
@@ -249,8 +268,7 @@ Example Request:
 Example Response:
 
 
-
-⚙️ Environment Configuration
+## Environment Configuration
 
 All configuration is passed through environment variables, following 12-Factor App standards.
 
@@ -266,27 +284,16 @@ Below is the list of environment variables used by the application:
 | `POSTGRES_PORT`     | Port for PostgreSQL                        | `5432`        |
 | `LOG_LEVEL`         | Application logging level                  | `INFO`        |
 
+## Testing
+```
+make test
+```
+Runs:
+`pytest --cov=app`
 
+## Logging
 
-🧪 Testing
-
-Run tests:
-
-pytest --cov=app
-
-
-Tests include:
-
-Healthcheck
-CRUD endpoints
-Input validation
-DB interactions
-
-
-🧾 Logging
-
-All logs use JSON format:
-
+```
 {
   "timestamp": "2025-01-10T12:45:20Z",
   "level": "INFO",
@@ -294,24 +301,21 @@ All logs use JSON format:
   "message": "Student created",
   "log_type": "application"
 }
-
+```
 ------------------------------------------------------------------------
 
-🚀 Milestone 2 – Dockerization & Image Optimization
-can be removed 
-This milestone focuses on running the API using Docker, creating a multi-stage Dockerfile, injecting environment variables at runtime, optimizing image size, and tagging images using semantic versioning (semver).
+## Milestone 2 – Containerise REST API
+This milestone focuses on Dockerizing the REST API following industry-standard best practices. The implementation includes building a multi-stage Dockerfile, injecting environment variables at runtime, optimizing the image size for production, tagging images using Semantic Versioning (SemVer), and running the API entirely inside Docker.
 
-This milestone focuses on packaging the REST API into a Docker image using a multi-stage Dockerfile, running the application inside containers, injecting runtime environment variables, optimizing for small image size, and tagging images using semantic versioning (semver).
-Docker and Docker Compose are required to build and run the containerized API.
+Prerequisites
 
-✅ Prerequisites
+Before proceeding, ensure the following tools are installed:
 
-Before starting with Dockerization, ensure the following tools are installed on your machine:
+### Docker Engine
 
-1. Docker Engine
+Install Docker using the official production-grade steps for Ubuntu:
 
-Follow the official production-grade installation steps:
-
+```
 # Add Docker GPG key and repository (Ubuntu)
 sudo apt update
 sudo apt install -y ca-certificates curl gnupg
@@ -319,7 +323,9 @@ sudo apt install -y ca-certificates curl gnupg
 sudo install -m 0755 -d /etc/apt/keyrings
 sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
 sudo chmod a+r /etc/apt/keyrings/docker.asc
-
+```
+Add the Docker repository:
+```
 echo \
 "Types: deb
 URIs: https://download.docker.com/linux/ubuntu
@@ -327,54 +333,52 @@ Suites: $(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}")
 Components: stable
 Signed-By: /etc/apt/keyrings/docker.asc" |
 sudo tee /etc/apt/sources.list.d/docker.sources > /dev/null
-
+```
+Install Docker:
+```
 sudo apt update
 sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-
+```
 
 Verify installation:
-
+```
 docker --version
 docker compose version
+```
 
-2. Add your user to the Docker group
-
-(So you can run Docker without sudo)
-
+## Add User to Docker Group
+Allows running Docker without sudo:
+```
 sudo usermod -aG docker $USER
 newgrp docker
+```
 
-
-🐳 Docker Usage Instructions
-Build Docker Image
+## Docker Usage Instructions
+### Build Docker Image
 Without Makefile:
+```
 docker build -t my-api:1.0.0 .
-
+```
 With Makefile:
+```
 make docker-build VERSION=1.0.0
-
-Run the API Container
+```
+## Run the API Container
 Without Makefile:
+```
 docker run -p 5000:5000 \
   -e DB_HOST=localhost \
   -e DB_USER=root \
   -e DB_PASS=password \
   my-api:1.0.0
+```
 
 With Makefile:
+```
 make docker-run VERSION=1.0.0
-
-🧪 Environment Variables
-
-The following environment variables can be injected at runtime:
-
-Variable	Description
-DB_HOST	Database hostname
-DB_USER	DB username
-DB_PASS	DB password
-PORT	Application port
-
-📦 Makefile Targets Added
+```
+### Makefile Targets Added
+```
 docker-build:
     docker build -t my-api:$(VERSION) .
 
@@ -383,122 +387,76 @@ docker-run:
 
 docker-push:
     docker push my-api:$(VERSION)
-
-🪶 Docker Image Optimization Techniques Used
-
-Multi-stage builds
-
-Lightweight base (alpine or slim)
-
-Removed unnecessary dependencies
-
-Cached layers
-
-Smaller final runtime layer
+```
 
 ---------------------------------------------------------
-🚀 Milestone 3 – One-Click Local Development Setup
+## Milestone 3 – One-Click Local Development Setup
+This milestone focuses on simplifying local development, enabling any team member to start the entire stack—even without pre-installed tools—using Docker Compose, Makefile automation, and helper scripts. The complete stack (API + Database + Migrations) can now be started with a single command, ensuring the correct startup order without manual steps.
 
-This milestone focuses on making local development extremely simple for any team member—even if they do not already have the required tools installed. Using Docker Compose, Makefile automation, and helper scripts, the entire stack (API + Database + Migrations) can now be started with a single command.
-
-2. Makefile Targets Added
+### Makefile Targets
 
 The Makefile now includes targets to automate:
+| Target                        | Description                                 |
+| ----------------------------- | ------------------------------------------- |
+| `make db-start`               | Starts the database service                 |
+| `make db-migrate`             | Runs database DML migrations                |
+| `make docker-build`           | Builds the REST API Docker image            |
+| `make api-start`              | Starts the API along with DB and migrations |
+| `make setup-tools` (optional) | Installs required tools using bash scripts  |
 
-Target	Description
-make db-start	Starts the DB service
-make db-migrate	Runs DB DML migrations
-make docker-build	Builds the REST API Docker image
-make api-start	Starts API (DB + migrations + API container)
-make setup-tools (optional)	Installs required tools using bash functions
+### Step-by-Step Local Setup
 
-
-🛠️ Pre-Requisites
-
-Before running the project, ensure the following tools are installed:
-
-1. Docker
-
-Check installation:
-
-docker --version
-
-2. Docker Compose
-
-(Check included in Docker Desktop)
-
-docker compose version
-
-3. Make
-make --version
-
-🚀 One-Click Local Development Setup
-
-The goal is to allow any team member to run the API with a single command.
-
-🧰 Step-by-Step Local Setup
-1️⃣ Start the Database
+1.Start the Database
+```
 make db-start
+```
+- Starts the DB container
+- Creates the network if needed
 
-
-This will:
-
-Start DB container
-
-Create network if needed
-
-2️⃣ Run Database DML Migrations
+2️.Run Database DML Migrations
+```
 make db-migrate
+```
 
+- Check whether DB is reachable
+- Applies all DML migrations
+Alternatively, you can run migrations directly using the backend container:
+```
+docker compose run --rm backend flask db migrate
+docker compose run --rm backend flask db upgrade
+```
 
-This will:
-
-Check whether DB is reachable
-
-Apply all DML migrations
-
-3️⃣ Build the API Docker Image
+3️.Build the API Docker Image
+```
 make docker-build VERSION=1.0.0
+```
+- Uses Semantic Versioning (SemVer)
 
-
-Uses semantic versioning.
-
-4️⃣ Start the REST API
+4️.Start the REST API
+```
 make api-start VERSION=1.0.0
+```
+- Starts the DB if not already running
+- Applies migrations
+- Builds the API Docker image if missing
+- Starts the API container via Docker Compose
+This ensures the stack is fully functional with a single command.
 
+## Docker Compose Overview
+The docker-compose.yml defines:
 
-This command automatically:
+- database service
+- api service
+- Shared network
+- Environment variables
+- Service dependencies (depends_on)
 
-Starts the DB (if not already running)
+This guarantees that the API waits until the database is ready.
 
-Applies migrations
+## Makefile Overview
 
-Builds the API Docker image (optional, if missing)
-
-Starts the API using docker compose up
-
-This ensures the entire stack is started in the correct order without any manual steps.
-
-🐳 Docker Compose Overview
-
-The docker-compose.yml includes:
-
-database service
-
-api service
-
-Shared network
-
-Environment variables
-
-Dependencies (depends_on)
-
-This guarantees that the API waits until DB is available.
-
-📝 Makefile Overview
-
-Example targets included (your actual Makefile may differ):
-
+Example Makefile targets:
+```
 db-start:
     docker compose up -d db
 
@@ -512,328 +470,139 @@ api-start:
     make db-start
     make db-migrate
     docker compose up -d api
-
-do the migration -m required by using the image and run the commad directly by migrate:
-	docker compose run --rm backend flask db migrate
-	docker compose run --rm backend flask db upgrade seperated or single 
+```
+Ensure to change makefile values acccordingly 
 	
 -------------------------------------------
 
-🚀 Milestone 4 – Continuous Integration (CI) Pipeline Setup
+## Milestone 4 – Continuous Integration (CI) Pipeline Setup
 
-This milestone introduces a fully automated CI pipeline powered by GitHub Actions and executed on a self-hosted runner.
-The goal is to ensure code quality, automated builds, testing, linting, and Docker image publishing — all triggered only when relevant code changes occur.
+This milestone introduces a fully automated CI pipeline using GitHub Actions, executed on a self-hosted runner. The goal is to ensure code quality, automated builds, testing, linting, and Docker image publishing, triggered only when relevant changes occur.
 
-The CI workflow includes the following stages, executed in the order listed:
+### CI Workflow Stages
 
-1. Build API
+The CI pipeline executes the following stages in order:
 
-The API is built using a dedicated Makefile target (e.g., make build).
-This guarantees consistent build steps across local and CI environments.
+Build API
+Uses a Makefile target (e.g., make build) to guarantee consistent builds across local and CI environments.
 
-2. Run Tests
+Run Tests
+Executes unit and integration tests using make test to ensure code correctness before creating Docker images.
 
-Unit and integration tests are executed using a Makefile target (e.g., make test).
-This ensures code correctness before producing a Docker image.
+Perform Code Linting
+Runs make lint (using flake8 and pylint) to enforce code quality and styling standards.
 
-3. Perform Code Linting
+Docker Login
+Authenticates to Docker Hub using GitHub Secrets (DOCKER_USERNAME and DOCKER_PASSWORD) to enable image publishing.
 
-Linting is performed via a Makefile target (e.g., make lint) using tools such as flake8.
-This helps maintain code quality and enforce styling guidelines.
+Docker Build & Push
+Builds and pushes Docker images using either Makefile targets or GitHub’s official Docker actions. Images follow Semantic Versioning (SemVer).
 
-4. Docker Login
+### Makefile Integration
 
-The pipeline authenticates to Docker Hub using GitHub Secrets:
+All core actions—build, test, and lint—are executed via Makefile targets to avoid duplicating logic in CI scripts.
 
-DOCKER_USERNAME
+### Self-Hosted GitHub Runner
 
-DOCKER_PASSWORD
-
-Authentication is required before pushing Docker images.
-
-5. Docker Build and Push
-
-A Docker image is built and pushed to Docker Hub using either:
-
-Makefile Docker targets, or
-
-GitHub’s official Docker actions
-
-Images may follow semantic versioning (SemVer), depending on your repository structure.
-
-🧱 Makefile Integration
-
-All core pipeline actions—build, test, and lint—are executed using Makefile targets.
-This ensures:
-
-Identical commands locally and in CI
-
-Cleaner workflow YAML
-
-Easier to reproduce and debug builds
-
-Example targets (conceptual):
-
-build:
-    # Build API code
-
-test:
-    # Run automated tests
-
-lint:
-    # Perform code linting
-
-docker-build:
-    # Build Docker image
-
-docker-push:
-    # Push Docker image
-
-
-The CI pipeline simply calls these targets instead of duplicating logic.
-
-🖥️ Self-Hosted GitHub Runner (Local Machine)
-
-To setup the self hosted runners: https://docs.github.com/en/actions/how-tos/manage-runners/self-hosted-runners/add-runners
-
-This pipeline is executed on a self-hosted runner installed on your local system.
-This runner is responsible for:
-
-Running Makefile commands
-
-Building Docker images
-
-Authenticating and pushing to Docker Hub
-
-Since Docker build and push are part of the pipeline, the self-hosted runner must have:
-
-Docker Engine
-
-Docker CLI
-
-Make
-
-Python (optional, depending on your app)
-
-The workflow uses:
-
-runs-on: self-hosted
-
-
-This ensures all CI tasks run locally instead of using GitHub-hosted runners.
-
-🎯 Trigger Rules
-
-The CI pipeline is designed to run only when relevant changes occur.
-
-✔ Trigger on code changes only
-
-The workflow executes only when files inside the code/ directory are modified:
-
-on:
-  push:
-    paths:
-      - "code/**"
-
-
-This prevents unnecessary pipeline runs from changes to docs, configs, or unrelated directories.
-
-✔ Manual Trigger Enabled
-
-The workflow can also be started manually from the GitHub Actions UI:
-
-Actions → CI Pipeline → Run Workflow
-
-
-Enabled using:
-
+The pipeline runs on a self-hosted runner installed locally. Key features:
+- Manual Trigger Enabled:
+Can be run on-demand via GitHub Actions UI using:
 workflow_dispatch:
 
+- Local Runner Setup:
+GitHub Docs – Add self-hosted runners: https://docs.github.com/en/actions/how-tos/manage-runners/self-hosted-runners/add-runners
+------------------------------------------------
 
-This allows developers to run the CI pipeline on demand, even without pushing code.
+## Milestone 5 — Deploy REST API & Dependent Services on Bare Metal
+This milestone focuses on deploying the REST API and supporting services on a bare-metal VM using Vagrant, Bash provisioning, Docker Compose, and Nginx load balancing.
 
+### Deployment Overview
+The deployment stack includes:
+- Vagrant – provisions the bare-metal VM
+- Bash Script – automates OS setup, installs Docker, Docker Compose, Git, Python, and adds users to the Docker group
+- Docker Compose – orchestrates containers (API, DB, Nginx)
+- Makefile – simplifies deployment commands
+- Nginx – load balances traffic across multiple API replicas
 
-📌 Milestone 5 — Deploy REST API & Dependent Services on Bare Metal
+### Infrastructure Provisioning
 
-This milestone focuses on deploying the REST API and all supporting services on a bare-metal environment using Vagrant, Bash provisioning, Docker Compose, and Nginx load balancing.
+#### Vagrant Setup:
+- Spins up a VM with CPU, memory, and networking configs
+- Sets up synced folders (optional)
+- Calls provisioning script (bootstrap.sh or similar)
 
-The end goal is to create a fully functional multi-container environment that exposes the API through a load balancer and verifies that the service is operational.
+#### Bash Script Provisioning:
+- Modular functions for idempotent setup
+- Installs Docker, Docker Compose, Git, curl/wget, Python
+- Adds users to the Docker group
+- Performs system updates and service setup
 
-🚀 Deployment Overview
+#### Application Deployment
 
-The deployment uses:
+The deployment runs 4 containers:
+| Service | Purpose                               |
+| ------- | ------------------------------------- |
+| API-1   | REST API instance                     |
+| API-2   | REST API instance                     |
+| DB      | Database container (PostgreSQL/MySQL) |
+| Nginx   | Load balancer for API replicas        |
 
-Vagrant → to provision a bare-metal VM
+#### Docker Compose features:
 
-Bash script → to configure the VM and install dependencies
+- Shared network
+- Environment variable injection
+- depends_on to ensure API starts after DB
 
-Docker Compose → to orchestrate all containers
+#### Makefile Targets:
 
-Makefile → to simplify deployment commands
+- setup → pulls Docker images
+- up → runs containers in detached mode
+- down → stops containers
+- logs → streams container logs
 
-Nginx → to load balance traffic between API replicas
+#### Nginx Load Balancing:
 
-🔧 Infrastructure Provisioning
-✔ Vagrant Setup
+- Configured using nginx/nginx.conf
 
-A Vagrantfile is used to:
+- Performs round-robin load balancing across API replicas
 
-Spin up a VM
+- Users access API via host/VM port 8080
 
-Allocate CPU, memory, and networking configurations
-
-Set up a synced folder (if required)
-
-Call a provisioning bash script
-
-Example concepts included:
-
-config.vm.box = "ubuntu/focal64"
-config.vm.provision "shell", path: "bootstrap.sh"
-
-✔ Bash Script Provisioning
-
-The VM is configured using a bootstrap.sh or similar script that includes:
-
-Modular bash functions for installation tasks
-
-Installation of required packages such as:
-
-Docker
-
-Docker Compose
-
-Git
-
-curl / wget
-
-Python (if needed)
-
-Adding the vagrant user to the Docker group
-
-System updates and service setup
-
-This ensures idempotent, repeatable VM provisioning.
-
-🐳 Application Deployment Using Docker Compose
-
-The deployment uses docker-compose.yaml to orchestrate:
-
-🔹 2 API containers
-
-Running the REST API application, scaled using:
-
-deploy:
-  replicas: 2
-
-
-or using explicit services:
-
-api-1
-
-api-2
-
-🔹 1 Database container
-
-A single DB instance such as PostgreSQL or MySQL.
-
-🔹 1 Nginx container
-
-Configured as a load balancer in front of the two API replicas.
-
-The final setup runs 4 containers:
-
-Service	Purpose
-API-1	REST API instance
-API-2	REST API instance
-DB	Database
-Nginx	Load balancer
-⚙️ Makefile Integration
-
-A Makefile is included in the repository to simplify deployment tasks such as:
-
-setup:
-	docker-compose pull
-
-up:
-	docker-compose up -d
-
-down:
-	docker-compose down
-
-logs:
-	docker-compose logs -f
-
-
-This ensures a consistent way to run, stop, and monitor the environment across local and VM environments.
-
-🌐 Nginx Load Balancing
-
-The Nginx configuration must be committed to the GitHub repository, including:
-
-nginx.conf
-
-Dockerfile (if customizing)
-
-Compose references
-
-Nginx performs round-robin load balancing across the two API containers.
-
-Example upstream block (conceptual):
-
+Example upstream configuration:
+```
 upstream api_backend {
     server api-1:5000;
     server api-2:5000;
 }
-
-External Access
-
-Users access the API through port 8080 on the host / VM.
-
-Nginx forwards requests internally to API containers:
-
-api-1:5000
-
-api-2:5000
-
-🔍 Functional Validation
-
+```
+#### Functional Validation
 After deployment:
 
-✔ API must be accessible via:
+- API must be accessible at:
+```
 http://<vm-ip>:8080
+```
+- Nginx distributes traffic across both API containers
+- All API endpoints return HTTP 200 OK when tested with Postman
 
-✔ Nginx should distribute traffic across both API containers.
-✔ All API endpoints must return HTTP 200 OK when tested using Postman.
+#### Validation confirms:
+- API is running
+- Load balancing works correctly
+- Containers are healthy
+- Database connectivity is functional
 
-This confirms that:
+#### Repository Requirements
 
-The API is running
+All files required for bare-metal deployment must be included in the repository:
 
-Load balancing works correctly
-
-Containers are healthy
-
-Database connectivity is functional
-
-📁 Repository Requirements
-
-The following files must be included in the repository:
-
-Vagrantfile
-
-Provisioning bash script (e.g., bootstrap.sh)
-
-docker-compose.yaml
-
-Makefile
-
-Nginx config (nginx.conf)
-
-Any additional environment or service configs
+- Vagrantfile – VM configuration
+- Provisioning bash script (provision.sh)
+- docker-compose.baremetal.yml – multi-container orchestration
+- Makefile – deployment automation
+- nginx/nginx.conf – Nginx load balancing configuration
 
 -------------------
-📌 Milestone 6 — Setup Kubernetes Cluster
+## Milestone 6 — Setup Kubernetes Cluster
 
 Prerequisites:
 install the minikube from https://minikube.sigs.k8s.io/docs/start/?arch=%2Flinux%2Fx86-64%2Fstable%2Fbinary+download 
@@ -898,7 +667,6 @@ Edit the CSI storage class:
 
 kubectl edit storageclass csi-hostpath-sc
 
-
 Ensure it includes:
 
 metadata:
@@ -952,25 +720,12 @@ Prevents scheduling failures such as:
 Pod stuck in Pending due to PV in a different zone/node.
 
 ------------------------------------
-Start  working on readme from here
+
 Milestone 7 – Deploy REST API & Dependent Services in Kubernetes
 ✅ Objective
 
 In this milestone, we migrate from bare-metal Vagrant deployments to Kubernetes-based deployments.
 Your REST API, database, and supporting components are now deployed on the 3-node Minikube cluster created in the previous milestone.
-
-This milestone teaches:
-
-Creating and modifying Kubernetes manifests
-
-Using ConfigMaps, Secrets, and External Secrets Operator
-
-Node labeling & scheduling
-
-Understanding Kubernetes service types
-
-Integrating HashiCorp Vault with ESO
-
 
 🚀 Deployment Architecture
 Node	Label	Usage
@@ -1130,7 +885,7 @@ openssl genrsa -out ca.key 4096
 
 # 2️⃣ Create the CA certificate
 openssl req -x509 -new -nodes -key ca.key -sha256 -days 3650 \
-  -out ca.crt -subj "/C=IN/ST=Karnataka/L=Bangalore/O=VaultCA/CN=Vault Root CA"
+  -out ca.crt -subj "/C=xxx/ST=xxxxx/L=xxxxx/O=VaultCA/CN=Vault Root CA"
 Now generate the Vault key and CSR (Certificate Signing Request):
 
 openssl genrsa -out tls.key 2048
@@ -1373,19 +1128,6 @@ Using subcharts and dependency management
 
 Deploying all services using Helm instead of raw YAML
 
-Helm Best Practices Followed
-✔ Templates split into reusable helper files
-
-_helpers.tpl contains:
-
-labels
-
-annotations
-
-naming conventions (e.g., {{ include "student-api.fullname" . }})
-
-✔ No hardcoded values
-
 Everything configurable is in values.yaml:
 
 image
@@ -1413,7 +1155,7 @@ Overridden for other charts like:
 nodeSelector:
   type: database
 
-✔ ESO + Vault integration parameterized
+✔ ESO + Vault integration parameterized-can be done 
 
 ExternalSecret template uses values like:
 vault:
@@ -1437,45 +1179,20 @@ initContainers:
     enabled: true is true disable it if you dont have the logging and monitoring setup and its relaveant crds
 then do the same steps like adding the unsealing etc same as did for the k8s-manifests then deploy the eso if using the  https deploy the secret sfor the cas ame as aboce k8s-manifest then deploy the eso in the infrastructure/external-serets file usinf a override file in the override-values/eso-fin-1.yaml
 
-#start working from here
+one vault is configured then deploy the eso from the helm-charts/infrastructure/external-secrets it uses ht eoverride file from the overrifde-values/eso-fin-1.yaml same before installing if you need the https of vault use the cert first make the seret sa s we did in previous milestonne ,also then apply the clusterstore present in the external-secrets/clusterstore.yaml
+
+now simply deploy the helm chart of the backedn app present in the helm-charts/backend in the student-api namespace then its template folder has external secrets alos disable this if the log and monitoring i snot disabled 
+
+serviceMonitor:
+  enabled: true
+  interval: 30s
+  path: /metrics
+
+alerts:
+  enabled: true
+  
 
 
-For local copies (recommended), they are already inside helm/.
-
-📦 Install Each Component
-1. Create namespaces via Helm
-
-Student API chart includes namespace.yaml inside templates, so installation handles it automatically.
-
-2. Deploy Vault (Node C)
-helm install vault helm/vault -n vault
-
-3. Deploy External Secrets Operator
-helm install eso helm/eso -n external-secrets
-
-4. Deploy Database (Node B)
-
-If using your custom chart:
-
-helm install student-db helm/database -n student-api
-
-
-If using community chart inside repo:
-
-helm install student-db helm/database -n student-api
-
-
-Both work because chart is bundled.
-
-5. Deploy REST API (Node A)
-helm install student-api helm/student-api -n student-api
-
-
-Values can be overridden:
-
-helm install student-api helm/student-api \
-  --namespace student-api \
-  -f helm/student-api/values-prod.yaml
 
 📡 Access the REST API
 
@@ -1578,42 +1295,18 @@ argocd/
 ✔ No manual creation of ArgoCD resources.
 
 🚀 ArgoCD Installation & Setup
-1. Create the Namespace
-kubectl create namespace argocd
 
-2. Install ArgoCD Components
-kubectl apply -n argocd \
-  -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
 
 3. Schedule ArgoCD on the dependent_services Node
 
-Label your node:
-
-kubectl label node <node-name> type=dependent_services
-
-
-Patch ArgoCD deployments (or set via Helm charts):
-
-spec:
-  template:
-    spec:
-      nodeSelector:
-        type: dependent_services
+in previous helm chart deployment only the argocd is present locally in the helm-charts/infrastructure/argocd and its override file is present in the override-values/values-argocd.yaml  also disable the 
+controller:
+  metrics:
+    rules:
+      enabled: true if the log and monitoring stack i s not configured 
+then in the argomanifest there is external secrets.yaml which createss ync secrets for the private repo of the deployment then after that apply the app.yaml which is the application type of argocd 
 
 
-Components deployed:
-
-argocd-server
-
-argocd-repo-server
-
-argocd-application-controller
-
-argocd-dex-server
-
-redis
-
-All under argocd namespace.
 
 📝 Declarative ArgoCD Manifests
 
@@ -1649,27 +1342,7 @@ spec:
 ✔ Uses repo as source of truth
 ✔ Auto sync and drift correction enabled
 
-🔐 Repository Access via ArgoCD
 
-ArgoCD requires repository credentials:
-
-argocd/secrets/repo-credentials.yaml:
-
-apiVersion: v1
-kind: Secret
-metadata:
-  name: github-repo-creds
-  namespace: argocd
-  labels:
-    argocd.argoproj.io/secret-type: repo-creds
-stringData:
-  url: https://github.com/<your-repo>
-  username: <github-username>
-  password: <github-token>
-
-
-✔ Committed declaratively
-✔ No UI secret creation
 
 🔄 CI Workflow: Update Helm Chart Image Tags
 
@@ -1795,7 +1468,6 @@ Exporters for application, DB, and network endpoint monitoring
 
 Configuring Kubernetes node selectors for dedicated observability workloads
 
-🚀 Problem Statement
 
 We need to deploy a complete PLG (Promtail, Loki, Grafana) stack with Prometheus to monitor:
 
@@ -1823,162 +1495,6 @@ Use Helm charts for all components.
 
 Store all Helm charts/configs in the same GitHub repository in the correct structure.
 
-✔ Expectations & Architecture
-🧱 1. Deploy Prometheus, Loki, Grafana on a Dedicated Node
-
-All observability components must run on the dependent_services node in the namespace:
-
-observability
-
-
-Add node labels such as:
-
-kubectl label node <NODE_NAME> type=dependent_services
-
-
-Each Helm chart must include:
-
-nodeSelector:
-  type: dependent_services
-
-
-Components deployed:
-
-Prometheus
-
-Loki (TSDB schema)
-
-Grafana
-
-Kube-state-metrics
-
-Node-Exporter
-
-Blackbox Exporter
-
-DB Metrics Exporter
-
-Promtail
-
-📦 2. Promtail → Send Application Logs Only
-
-Promtail must:
-
-Tail logs only from API pods (via label selectors or file paths)
-
-Exclude logs from system pods, exporters, and other infrastructure
-
-Example:
-
-scrape_configs:
-  - job_name: student-api-logs
-    kubernetes_sd_configs:
-      - role: pod
-    relabel_configs:
-      - source_labels: [__meta_kubernetes_pod_label_app]
-        regex: student-api
-        action: keep
-
-
-This ensures only app logs go to Loki.
-
-📊 3. Deploy DB Metrics Exporter
-
-Depending on DB type:
-
-PostgreSQL → postgres-exporter
-
-MySQL → mysqld-exporter
-
-Exporter must run inside observability namespace.
-
-Prometheus scrape config example:
-
-- job_name: db-exporter
-  static_configs:
-    - targets: ['db-exporter.observability.svc:9187']
-
-🌐 4. Deploy Blackbox Exporter (Endpoint Monitoring)
-
-The blackbox exporter monitors:
-
-REST API (/health)
-
-ArgoCD server
-
-Hashicorp Vault
-
-DB endpoint (optional ping)
-
-Any internal service URL
-
-Example scrape config:
-
-- job_name: blackbox
-  metrics_path: /probe
-  params:
-    module: [http_2xx]
-  static_configs:
-    - targets:
-        - https://argocd-server.argocd.svc
-        - https://vault.vault.svc
-        - http://student-api.student-api.svc/health
-  relabel_configs:
-    - source_labels: [__address__]
-      target_label: __param_target
-    - target_label: instance
-      source_labels: [__param_target]
-    - target_label: __address__
-      replacement: blackbox-exporter.observability.svc:9115
-
-📈 5. Enable Kubernetes & Node-Level Metrics
-
-Prometheus must scrape:
-
-✔ kube-state-metrics
-
-Provides cluster object metrics (pods, deployments, PVCs, PVs).
-
-✔ node-exporter
-
-Provides CPU, RAM, Disk, and file system metrics.
-
-Both should run on all nodes.
-
-These must be installed via Helm charts.
-
-📄 6. Configure Grafana (Dashboards + Data Sources)
-
-Grafana must:
-
-Run in observability namespace
-
-Use dependent_services nodeSelector
-
-Include two data sources:
-
-Prometheus datasource
-http://prometheus-server.observability.svc:9090
-
-Loki datasource
-http://loki.observability.svc:3100
-
-
-You should also import dashboards for:
-
-API latency
-
-Node exporter / machine metrics
-
-DB metrics
-
-ArgoCD latency
-
-Vault health
-
-Pod health
-
-Log insights
 
 📁 7. Directory Structure (Helm Charts & Configs)
 
@@ -2002,6 +1518,11 @@ observability-configs/
   promtail-values.yaml
 
 📘 Deployment Instructions (README)
+note: also make sure you enable (by default enable the alerts and monitroing form the argocd,vault,backedn app if disabled duing the deployment using helm previoius milestone once after settting up the log an dmonitoring setup )
+the helm charts for the observability stack is present locally with the override values.yaml 
+also in the logging and monitoring stack we have the secrets for grafana ,alertmanager the db exporter we can also use the existing secret for this to work of the backedn secret then also the externla serets are there in their own respective folders like postgrasdb exporter template fodler has its own  externalresourece sam egoes for kube prom (alermanager) and the grafan has secerets in its on helm chart also lalerts are with them too the backedn api app has it sown alert and svc monitoring in ts template folder from valuesyaml we can envble it also the kube prmetheus stack has their own too 
+
+
 1. Create namespace
 kubectl create namespace observability
 
@@ -2261,6 +1782,7 @@ kubectl port-forward svc/grafana 3000:80 -n observability
 
 
 Open: http://localhost:3000
+
 
 
 
