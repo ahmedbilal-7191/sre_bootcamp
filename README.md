@@ -95,8 +95,6 @@ the current project has migrations folder to github so if wantt o use thaat  no 
 ```
 make migrate-init
 ```
-Create a Migration
-
 
 6.Create a Migration(Generate migration scripts)
 ```
@@ -307,7 +305,7 @@ Below is the list of environment variables used by the application:
 make test
 ```
 Runs:
-`pytest --cov=app`
+`pytest -v --cov=app --cov-report=term-missing`
 
 ## Logging
 
@@ -408,7 +406,7 @@ The Makefile now includes targets to automate:
 | `make db-up`                  | Starts the database service                 |
 | `make db-down`                | Runs database DML migrations                |
 | `make db-status`              | Show database container status            |
-| `make docker-build`              | Build the REST API Docker image (SemVer tagging supported) |
+| `make docker-build`              | Build the REST API Docker image (SemVer tagging supported) | i think these two can be put in milestone 2 
 | `make docker-run` | Run the API container using `.env`  |
 | `make compose-build`  | Build all Docker Compose services  |
 | `make compose-up`  | Start DB → run migrations → start API  |
@@ -481,7 +479,7 @@ Build API
 Uses a Makefile target (e.g., make build) to guarantee consistent builds across local and CI environments.
 
 Run Tests
-Executes unit and integration tests using make test to ensure code correctness before creating Docker images.
+Executes unit tests using make test to ensure code correctness before creating Docker images.
 
 Perform Code Linting
 Runs make lint (using flake8 and pylint) to enforce code quality and styling standards.
@@ -649,7 +647,7 @@ install the kubectl from https://kubernetes.io/docs/tasks/tools/
 This milestone focuses on creating a multi-node Kubernetes cluster using Minikube and preparing it for future production-like deployments.
 The cluster will be used to run the application, database, and dependent services in isolated node groups, similar to a real production topology.
 
-1️⃣ Spin Up a Multi-Node Minikube Cluster
+1️.Spin Up a Multi-Node Minikube Cluster
 
 A four-node cluster must be created:
 
@@ -661,7 +659,7 @@ Example:
 
 minikube start --nodes 4 -p prod-cluster
 
-2️⃣ Label the Worker Nodes Appropriately
+2️.Label the Worker Nodes Appropriately
 
 Add labels to instruct the scheduler where to run future workloads:
 
@@ -682,16 +680,15 @@ These labels will later be used in Deployment manifests:
 nodeSelector:
   type: application
 
-3️⃣ Enable CSI HostPath Storage Driver
+3️.Enable CSI HostPath Storage Driver
 
 To support multi-node storage provisioning, enable Minikube’s CSI hostpath addon:
 
 minikube addons enable csi-hostpath-driver -p prod-cluster
 
-
 This provides a CSI-driven dynamic storage backend.
 
-4️⃣ Update the Default Storage Class
+4️.Update the Default Storage Class
 
 Minikube creates a default storage class that does not support multi-node scheduling.
 We must:
@@ -760,10 +757,11 @@ Pod stuck in Pending due to PV in a different zone/node.
 ------------------------------------
 
 Milestone 7 – Deploy REST API & Dependent Services in Kubernetes
-✅ Objective
 
 In this milestone, we migrate from bare-metal Vagrant deployments to Kubernetes-based deployments.
 Your REST API, database, and supporting components are now deployed on the 3-node Minikube cluster created in the previous milestone.
+
+add a image here 
 
 🚀 Deployment Architecture
 Node	Label	Usage
@@ -771,143 +769,7 @@ Node A	type=application	REST API deployment
 Node B	type=database	PostgreSQL DB
 Node C	type=dependent_services	Vault, ESO, Observability stack
 
-You previously configured node labels using:
-
-kubectl label node <node-name> type=application
-kubectl label node <node-name> type=database
-kubectl label node <node-name> type=dependent_services
-
-
-All YAML manifests ensure workloads are scheduled correctly using:
-
-nodeSelector:
-  type: application   # or database, dependent_services
-
-🔐 Secrets Management with ESO + Vault
-1. Vault runs inside Kubernetes (Node C)
-
-Vault stores:
-
-DB username
-
-DB password
-
-API secrets
-
-2. External Secrets Operator (ESO) pulls secrets from Vault
-
-We declare a SecretStore pointing to Vault:
-
-apiVersion: external-secrets.io/v1beta1
-kind: SecretStore
-metadata:
-  name: vault-backend
-  namespace: student-api
-spec:
-  provider:
-    vault:
-      server: "http://vault.vault:8200"
-      path: "student-api/"
-      version: "v2"
-      auth:
-        token:
-          name: vault-token
-          key: token
-
-3. Application and DB use ExternalSecret
-apiVersion: external-secrets.io/v1beta1
-kind: ExternalSecret
-metadata:
-  name: db-credentials
-  namespace: student-api
-spec:
-  secretStoreRef:
-    name: vault-backend
-    kind: SecretStore
-  target:
-    name: db-secret
-  data:
-    - secretKey: username
-      remoteRef:
-        key: db-user
-    - secretKey: password
-      remoteRef:
-        key: db-pass
-
-
-This auto-creates:
-
-db-secret
-
-
-Used by application and DB.
-
-🗃️ Database Deployment with Init Container (DML Migrations)
-
-DB migrations must run before application pod starts.
-
-Your application.yml includes:
-
-initContainers:
-  - name: run-migrations
-    image: my-api:latest
-    command: ["sh", "-c", "python manage.py run_migrations"]
-    envFrom:
-      - secretRef:
-          name: db-secret
-
-
-The migration init container ensures DB is ready before the main app container starts.
-
-📦 Storage Class (CSI HostPath)
-
-You enabled and modified:
-
-minikube addons enable csi-hostpath-driver
-
-
-Then edited default storage class:
-
-volumeBindingMode: WaitForFirstConsumer
-
-
-This ensures PV is created on the correct node where the pod is scheduled, crucial for multi-node Minikube.
-
-📡 Exposing REST API
-
-The REST API is exposed via Kubernetes Service:
-
-apiVersion: v1
-kind: Service
-metadata:
-  name: student-api-service
-spec:
-  type: NodePort
-  selector:
-    app: student-api
-  ports:
-    - port: 5000
-      targetPort: 5000
-      nodePort: 32000
-
-
-You can access API at:
-
-http://<minikube-ip>:32000
-
-🧪 Validate API
-
-Using Postman:
-
-GET /students → 200 OK
-
-POST /students → 200 OK
-
-PUT /students/:id → 200 OK
-
-DELETE /students/:id → 200 OK
-
-Ensure databases are functioning and init-migrations ran successfully.
+You previously configured node labels using: check the configs from the previous milestone 
 
 📜 Steps to Deploy Everything
 1. Start 3-node Minikube
@@ -945,7 +807,7 @@ kubectl -n vault create secret generic vault-tls \
 
   once the cert secrets is created then do
 
-  Deploy Vault
+  Deploy Vault here it will get deployed on the dependent_services labeled node since we labeled in previous and also since consumer first firsst the pod will be deployed then the volume will be created since we changed thath in the previos example
 kubectl apply -f k8s-manifests/vault/
 
 
@@ -963,7 +825,6 @@ then enable k8s auth :
 
 # Enable Kubernetes authentication
 vault auth enable kubernetes
-
 
 
 # Configure Kubernetes auth with proper paths
@@ -1015,6 +876,7 @@ helm template external-secrets \
   --set webhook.nodeSelector.type=dependencies \
   --set certController.nodeSelector.type=dependencies \
   > k8s-manifests/eso/external-secrets.yaml
+or do a helm templates external-secrets then genereate the yaml in put it in a file then apply manually or --dryrun option
 
 deploy it using helm only for manifests make a copy into a file then apply if from file in the external-secrets namespace 
 
@@ -1030,6 +892,8 @@ kubectl create secret generic vault-ca \
 then apply eso/store-secret.yaml - it has secret store and the external secrets yaml whihch will sync secrets and apply in the student-api namespace
 
 also if not want to use the https then dont include the volume mount in the vault config and the in the cluster store use http not https for url and dont mount the ca cert for the clustrer store too 
+this project uses the sync secrets once the we have the credential in the vault and a   cluster store is configure then etersecrets kind resource will sync it in the configured namespace 
+
 7. Deploy Database (Node B- already having node selector to be oon database node)
 kubectl apply -f k8s-manifests/db.yaml
 
@@ -1047,15 +911,14 @@ Here is the second Options:
 This milestone focuses on deploying the REST API and its dependent services (database, migrations, secrets, configs) on Kubernetes.
 All Kubernetes manifests, namespaces, ConfigMaps, ESO (External Secrets Operator), and Vault-based secrets must be created and deployed using standard YAML manifests.
 
-📁 Repository Structure
+📁 Repository Structure -make it done correct and also put it up before the deployment setup
 
 All Kubernetes manifests must be committed inside the same repository:
 
 k8s/
- ├── application/
- │    └── application.yml
- ├── database/
- │    └── database.yml
+ ├── application.yml
+ ├── database.yml
+ │    
  ├── eso/
  │    ├── external-secret.yml
  │    ├── secret-store.yml
@@ -1156,60 +1019,7 @@ Milestone 8 – Deploy REST API & Dependent Services Using Helm Charts
 In this milestone, we transition from raw Kubernetes manifests to Helm-based deployments for the REST API, database, Vault, and other dependent services.
 Helm allows us to package, version, parameterize, and reuse deployments in a clean and production-friendly manner.
 
-This milestone teaches:
-
-Helm chart structure (templates, values, helpers)
-
-Best practices for chart packaging
-
-Using subcharts and dependency management
-
-Deploying all services using Helm instead of raw YAML
-
-Everything configurable is in values.yaml:
-
-image
-
-resources
-
-nodeSelector
-
-Vault secret paths
-
-DB connection URLs
-
-Service type (NodePort / ClusterIP)
-
-✔ Node scheduling handled through values
-
-Example in values.yaml:
-
-nodeSelector:
-  type: application
-
-
-Overridden for other charts like:
-
-nodeSelector:
-  type: database
-
-✔ ESO + Vault integration parameterized-can be done 
-
-ExternalSecret template uses values like:
-vault:
-  path: "student-api/"
-  secretKeys:
-    username: db-user
-    password: db-pass
-
-✔ DB migrations handled via initContainers
-
-Your API Helm chart includes:
-
-initContainers:
-  - name: run-migrations
-    image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
-    command: ["sh", "-c", "python manage.py run_migrations"]
+we can mention the repo structure now here 
 
 🚀 Deployment Workflow Using Helm
 1. here in out case we have already helm manifest files for the managed chart locally present to first deploy the vault if we want the ca certs etc the process is same a sabove for the k8s manifest deployment craeating a secrets then applying as a ca to (aslo if dont want the https change config to not to use the not to mount from the secrets )the helm charts then depploy the vault using helm in the helm charts/infrastructure/vault but its override values.yaml is in overridee-values/vault-fin-1 here serverTelemetry:
@@ -1820,6 +1630,7 @@ kubectl port-forward svc/grafana 3000:80 -n observability
 
 
 Open: http://localhost:3000
+
 
 
 
