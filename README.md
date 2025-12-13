@@ -84,24 +84,39 @@ venv\Scripts\activate
 4.Install Dependencies (via Makefile)
 Instead of installing manually, use:
 ```
-make build-local-api
+make build
 ```
 This executes:
 - `python -m pip install --upgrade pip`
 - `pip install --no-cache-dir -r requirements.dev.txt`
 
-5.Run migrations
+the current project has migrations folder to github so if wantt o use thaat  no need to initializa if begeing withou the migrations folder then 
+5.Initialize DB Migrations (run once)
 ```
-make migrate
+make migrate-init
+```
+Create a Migration
+
+
+6.Create a Migration(Generate migration scripts)
+```
+make migrate-create M="create students table"
 ```
 Which internally runs:
 ```
-flask db init
-flask db migrate
+flask db migrate -m "$(M)"
+```
+
+7.Apply Migrations
+```
+make migrate-upgrade
+```
+Which internally runs:
+```
 flask db upgrade
 ```
 
-6.Start the API
+7.Start the API
 Option A — Flask Dev Server
 ```
 make run
@@ -119,16 +134,20 @@ Runs:
 gunicorn --bind 0.0.0.0:8000 "app:create_app()"
 ```
 
+Health Check
+curl http://localhost:5000/healthcheck
+
 ## Makefile Commands
-| Command                | Description                    |
-| ---------------------- | ------------------------------ |
-| `make run`             | Start Flask API                |
-| `make run-gunicorn`    | Start API using Gunicorn       |
-| `make test`            | Run test suite                 |
-| `make migrate`         | Generate migrations            |
-| `make upgrade`         | Apply database migrations      |
-| `make lint`            | Run flake8 & pylint            |
-| `make build-local-api` | Install local dev dependencies |
+| Command                               | Description                    |
+| ------------------------------------- | ------------------------------ |
+| `make run`                            | Start Flask API                |
+| `make run-gunicorn`                   | Start API using Gunicorn       |
+| `make test`                           | Run test suite                 |
+| `make migrate-create M="message"`     | Generate a new migration script|
+| `make migrate-upgrade`                | Apply database migrations      |
+| `make lint`                           | Run flake8 & pylint            |
+| `make migrate-init`                   | Initialize Alembic migrations (run once) |
+| `make build`                          | Install local dev dependencies |
 
 
 ## Project Structure
@@ -163,7 +182,6 @@ gunicorn --bind 0.0.0.0:8000 "app:create_app()"
 │   ├── errors.py               # Centralized error handlers
 │   ├── extensions.py           # DB, Marshmallow, JWT, Logger initialization
 │   ├── logging_config.py       # Logging configuration
-│
 │   ├── __init__.py             # Flask application factory
 │
 ├── migrations/                 # Alembic migrations
@@ -361,7 +379,7 @@ docker build -t my-api:1.0.0 .
 ```
 With Makefile:
 ```
-make docker-build VERSION=1.0.0
+make docker-build
 ```
 ## Run the API Container
 Without Makefile:
@@ -375,18 +393,7 @@ docker run -p 5000:5000 \
 
 With Makefile:
 ```
-make docker-run VERSION=1.0.0
-```
-### Makefile Targets Added
-```
-docker-build:
-    docker build -t my-api:$(VERSION) .
-
-docker-run:
-    docker run -p 8080:8080 --env-file .env my-api:$(VERSION)
-
-docker-push:
-    docker push my-api:$(VERSION)
+make docker-run
 ```
 
 ---------------------------------------------------------
@@ -398,22 +405,25 @@ This milestone focuses on simplifying local development, enabling any team membe
 The Makefile now includes targets to automate:
 | Target                        | Description                                 |
 | ----------------------------- | ------------------------------------------- |
-| `make db-start`               | Starts the database service                 |
-| `make db-migrate`             | Runs database DML migrations                |
-| `make docker-build`           | Builds the REST API Docker image            |
-| `make api-start`              | Starts the API along with DB and migrations |
-| `make setup-tools` (optional) | Installs required tools using bash scripts  |
+| `make db-up`                  | Starts the database service                 |
+| `make db-down`                | Runs database DML migrations                |
+| `make db-status`              | Show database container status            |
+| `make docker-build`              | Build the REST API Docker image (SemVer tagging supported) |
+| `make docker-run` | Run the API container using `.env`  |
+| `make compose-build`  | Build all Docker Compose services  |
+| `make compose-up`  | Start DB → run migrations → start API  |
+| `make compose-down`  | Stop all Docker Compose services  |
 
 ### Step-by-Step Local Setup
 
 1.Start the Database
 ```
-make db-start
+make db-up
 ```
 - Starts the DB container
 - Creates the network if needed
 
-2️.Run Database DML Migrations
+2️.Run Database DML Migrations to be done
 ```
 make db-migrate
 ```
@@ -428,19 +438,22 @@ docker compose run --rm backend flask db upgrade
 
 3️.Build the API Docker Image
 ```
-make docker-build VERSION=1.0.0
+make compose-build
 ```
 - Uses Semantic Versioning (SemVer)
 
-4️.Start the REST API
+4️.Start the REST API-Start DB, run migrations, and start API:
 ```
-make api-start VERSION=1.0.0
+make compose-up
 ```
 - Starts the DB if not already running
 - Applies migrations
 - Builds the API Docker image if missing
 - Starts the API container via Docker Compose
 This ensures the stack is fully functional with a single command.
+
+5.Stop services
+```make compose-down```
 
 ## Docker Compose Overview
 The docker-compose.yml defines:
@@ -453,25 +466,6 @@ The docker-compose.yml defines:
 
 This guarantees that the API waits until the database is ready.
 
-## Makefile Overview
-
-Example Makefile targets:
-```
-db-start:
-    docker compose up -d db
-
-db-migrate:
-    docker exec db-container-name python migrate.py
-
-docker-build:
-    docker build -t my-api:$(VERSION) .
-
-api-start:
-    make db-start
-    make db-migrate
-    docker compose up -d api
-```
-Ensure to change makefile values acccordingly 
 	
 -------------------------------------------
 
@@ -516,6 +510,55 @@ GitHub Docs – Add self-hosted runners: https://docs.github.com/en/actions/how-
 ## Milestone 5 — Deploy REST API & Dependent Services on Bare Metal
 This milestone focuses on deploying the REST API and supporting services on a bare-metal VM using Vagrant, Bash provisioning, Docker Compose, and Nginx load balancing.
 
+Prerequisites (Host)
+
+Vagrant
+
+VirtualBox
+
+Start the VM
+```
+vagrant up
+vagrant ssh
+```
+
+Deploy Full Stack
+cd /vagrant
+make deploy-baremetal
+
+What This Does
+
+Provisions Ubuntu VM
+
+Installs Docker, Compose, Make
+
+Starts:
+
+2 API containers
+
+1 PostgreSQL container
+
+1 Nginx load balancer
+
+Runs DB migrations automatically
+
+🌐 Access API (via Nginx)
+http://localhost:8080
+
+
+Health check:
+
+curl http://localhost:8080/healthcheck
+
+
+✔ Status: 200 OK
+✔ Traffic load-balanced across both APIs
+
+#### Stop and remove bare-metal deployment
+```
+make destroy-baremetal
+```
+
 ### Deployment Overview
 The deployment stack includes:
 - Vagrant – provisions the bare-metal VM
@@ -537,7 +580,7 @@ The deployment stack includes:
 - Adds users to the Docker group
 - Performs system updates and service setup
 
-#### Application Deployment
+#### Application Deployment Add a image here 
 
 The deployment runs 4 containers:
 | Service | Purpose                               |
@@ -547,18 +590,6 @@ The deployment runs 4 containers:
 | DB      | Database container (PostgreSQL/MySQL) |
 | Nginx   | Load balancer for API replicas        |
 
-#### Docker Compose features:
-
-- Shared network
-- Environment variable injection
-- depends_on to ensure API starts after DB
-
-#### Makefile Targets:
-
-- setup → pulls Docker images
-- up → runs containers in detached mode
-- down → stops containers
-- logs → streams container logs
 
 #### Nginx Load Balancing:
 
@@ -585,14 +616,21 @@ http://<vm-ip>:8080
 - Nginx distributes traffic across both API containers
 - All API endpoints return HTTP 200 OK when tested with Postman
 
-#### Validation confirms:
-- API is running
-- Load balancing works correctly
-- Containers are healthy
-- Database connectivity is functional
-
 #### Repository Requirements
-
+```
+.
+├── Vagrantfile
+├── provision.sh
+├── Makefile
+├── docker-compose.yml
+├── docker-compose.baremetal.yml
+├── nginx/
+│   └── nginx.conf
+├── app/
+├── migrations/
+└── README.md
+```
+add a dockre file to this structure too
 All files required for bare-metal deployment must be included in the repository:
 
 - Vagrantfile – VM configuration
@@ -1782,6 +1820,7 @@ kubectl port-forward svc/grafana 3000:80 -n observability
 
 
 Open: http://localhost:3000
+
 
 
 
