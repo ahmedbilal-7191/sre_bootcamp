@@ -639,25 +639,30 @@ All files required for bare-metal deployment must be included in the repository:
 
 -------------------
 ## Milestone 6 — Setup Kubernetes Cluster
+This milestone focuses on setting up a production-like Kubernetes cluster using Minikube with three worker nodes, each labeled to represent different workload responsibilities.
+This prepares the cluster for deploying the application, database, and dependent services in later milestones.
 
-Prerequisites:
-install the minikube from https://minikube.sigs.k8s.io/docs/start/?arch=%2Flinux%2Fx86-64%2Fstable%2Fbinary+download 
-install the kubectl from https://kubernetes.io/docs/tasks/tools/
+## Prerequisites:
+Ensure the following tools are installed on your system:
+- minikube
+https://minikube.sigs.k8s.io/docs/start/?arch=%2Flinux%2Fx86-64%2Fstable%2Fbinary+download 
+- kubectl
+https://kubernetes.io/docs/tasks/tools/
 
-This milestone focuses on creating a multi-node Kubernetes cluster using Minikube and preparing it for future production-like deployments.
-The cluster will be used to run the application, database, and dependent services in isolated node groups, similar to a real production topology.
-
-1️.Spin Up a Multi-Node Minikube Cluster
-
-A four-node cluster must be created:
-
-1 control-plane node
-
-3 worker nodes
-
-Example:
-
+Verify installation:
+```
+minikube version
+kubectl version --client
+```
+1.Create a Multi-Node Minikube Cluster
+```
 minikube start --nodes 4 -p prod-cluster
+```
+
+verify nodes:
+```
+kubectl get nodes
+```
 
 2️.Label the Worker Nodes Appropriately
 
@@ -674,33 +679,35 @@ kubectl label node prod-cluster-m02 type=application
 kubectl label node prod-cluster-m03 type=database
 kubectl label node prod-cluster-m04 type=dependent_services
 
+verify lables:
+```
+kubectl get nodes --show-labels
+```
 
 These labels will later be used in Deployment manifests:
 
 nodeSelector:
   type: application
 
+
 3️.Enable CSI HostPath Storage Driver
 
-To support multi-node storage provisioning, enable Minikube’s CSI hostpath addon:
-
+To support multi-node persistent storage, enable Minikube’s CSI HostPath driver:
+```
 minikube addons enable csi-hostpath-driver -p prod-cluster
+```
+This enables CSI-backed dynamic volume provisioning, which is required for stateful workloads in multi-node clusters.
 
-This provides a CSI-driven dynamic storage backend.
+4️.Configure the Default StorageClass
+Minikube’s default standard StorageClass is not suitable for multi-node workloads.
+We configure the CSI HostPath StorageClass as the default.
 
-4️.Update the Default Storage Class
+4.1 Set CSI HostPath as Default
 
-Minikube creates a default storage class that does not support multi-node scheduling.
-We must:
-
-✔ Mark the CSI HostPath StorageClass as default
-✔ Ensure future PVCs bind to volumes that stay on the correctly labeled node
-
-Steps:
-
-Edit the CSI storage class:
-
+Edit the CSI StorageClass:
+```
 kubectl edit storageclass csi-hostpath-sc
+```
 
 Ensure it includes:
 
@@ -708,162 +715,196 @@ metadata:
   annotations:
     storageclass.kubernetes.io/is-default-class: "true"
 
+4.2 (Optional but Recommended) Remove Default Annotation from Old StorageClass
+```
+kubectl patch storageclass standard -p \
+'{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"false"}}}'
+```
+ What This Ensures
 
-(Optional but recommended) Remove default annotation from the old storage class:
+All future PVCs automatically use CSI HostPath
 
-kubectl patch storageclass standard -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"false"}}}'
+PersistentVolumes are created on the same node where the pod is scheduled
 
+Ideal for databases and other stateful components
 
-This ensures:
+ Why CSI HostPath Matters
 
-All PVCs use CSI HostPath
+Default Minikube storage works reliably only in single-node clusters.
 
-PVs are provisioned on the same node where the pod is scheduled
-
-Ideal for future DB/stateful components
-
-🧪 Why CSI HostPath Matters
-
-Normal Minikube storage works only for single-node clusters.
 With CSI HostPath:
 
 Each worker node has its own CSI driver mount
 
 Volumes are provisioned per node
 
-This perfectly pairs with your node labels:
+Storage respects pod scheduling decisions
 
-For example:
+Perfect Match with Node Labels
+Workload	Node	Volume Location
+Database Pods	Node B	Node B
+Application Pods	Node A	Node A
+Dependent Services	Node C	Node C
 
-Database Pods → Node B → Volumes also on Node B
+This prevents cross-node storage conflicts.
 
-Application Pods → Node A → Volumes on Node A
+⏳ volumeBindingMode: WaitForFirstConsumer
 
-This prevents cross-node storage issues.
+The CSI HostPath StorageClass uses:
 
 volumeBindingMode: WaitForFirstConsumer
 
-This ensures:
 
-Kubernetes does NOT create the PV immediately
+This means:
+
+Kubernetes does not provision a PV immediately
 
 It waits until the Pod is scheduled
 
-Then it provisions the PV on the same node (or topology zone) where the Pod is placed
+The PV is created on the same node as the Pod
 
-Prevents scheduling failures such as:
-Pod stuck in Pending due to PV in a different zone/node.
+Prevents Common Issues
+
+Pods stuck in Pending
+
+PV created on the wrong node
+
+Node affinity and scheduling conflicts
 
 ------------------------------------
 
 Milestone 7 – Deploy REST API & Dependent Services in Kubernetes
 
-In this milestone, we migrate from bare-metal Vagrant deployments to Kubernetes-based deployments.
-Your REST API, database, and supporting components are now deployed on the 3-node Minikube cluster created in the previous milestone.
+In this milestone, we migrate from bare-metal Vagrant deployments to Kubernetes-based deployments using Minikube.
+The Student REST API, PostgreSQL database, and all dependent services (Vault, External Secrets Operator) are deployed on a 3-node Minikube cluster created in the previous milestone.
 
 add a image here 
 
-🚀 Deployment Architecture
-Node	Label	Usage
-Node A	type=application	REST API deployment
-Node B	type=database	PostgreSQL DB
-Node C	type=dependent_services	Vault, ESO, Observability stack
 
-You previously configured node labels using: check the configs from the previous milestone 
+Repository Structure
 
-📜 Steps to Deploy Everything
-1. Start 3-node Minikube
+All Kubernetes manifests are committed in the same repository:
 
-(Already completed)
+k8s/
+├── application.yml
+├── database.yml
+├── eso/
+│   ├── external-secret.yml
+│   ├── secret-store.yml
+│   └── vault-config.yml
+├── vault/
+│   ├── deployment.yml
+│   ├── service.yml
+│   └── policies.hcl
+├── namespaces/
+│   └── student-api-namespace.yml
+└── README.md
+
 create 3 namespace student-api ,external-secrets,vault then 
-3. Deploy Vault
-kubectl apply -f k8s-manifests/vault/
 
-if want the vault to have the https certs 
-# 1️⃣ Create the CA private key
+Deployment Steps:
+
+Deploy Vault (Node C – dependent_services)
+### Optional: Enable TLS for Vault
+
+Generate CA
+```
 openssl genrsa -out ca.key 4096
-
-# 2️⃣ Create the CA certificate
 openssl req -x509 -new -nodes -key ca.key -sha256 -days 3650 \
   -out ca.crt -subj "/C=xxx/ST=xxxxx/L=xxxxx/O=VaultCA/CN=Vault Root CA"
-Now generate the Vault key and CSR (Certificate Signing Request):
+```
 
+Generate Vault Cert
+```
 openssl genrsa -out tls.key 2048
 openssl req -new -key tls.key -out vault.csr -config vault-cert.cnf
-
-
-Sign it with your CA:
-
 openssl x509 -req -in vault.csr -CA ca.crt -CAkey ca.key -CAcreateserial \
   -out tls.crt -days 3650 -sha256 -extfile vault-cert.cnf -extensions req_ext
+```
 
 certs$ ls
 ca.crt  ca.key  ca.srl  tls.crt  tls.key  vault-cert.cnf  vault.csr
 
+Create TLS secret:
+```
 kubectl -n vault create secret generic vault-tls \
   --from-file=tls.crt=tls.crt \
   --from-file=tls.key=tls.key \
   --from-file=ca.crt=ca.crt
-
+```
   once the cert secrets is created then do
 
-  Deploy Vault here it will get deployed on the dependent_services labeled node since we labeled in previous and also since consumer first firsst the pod will be deployed then the volume will be created since we changed thath in the previos example
+Deploy Vault:
+```
 kubectl apply -f k8s-manifests/vault/
+```
+Vault pods are scheduled on the dependent_services node using nodeSelector.
 
-
-exec into vault-0 vault then run
-vault operator init
-or if want to use only 1 key 
-
-vault operator init -key-shares=1 -key-threshold=1
+Initialize & Configure Vault:
+```
+kubectl exec -it vault-0 -n vault -- vault operator init -key-shares=1 -key-threshold=1
+kubectl exec -it vault-0 -n vault -- vault operator unseal
+```
 
 get those keys and unseal it 
 after this directly run unseal for the vault-1,vault-2 also they will join auto since retryjoin
 then exec into vault-0 pod we get vault operator raft list-peers we get all 3 followers and leaders
 
+Verify raft cluster:
+```
+vault operator raft list-peers
+```
+
 then enable k8s auth :
 
 # Enable Kubernetes authentication
+```
 vault auth enable kubernetes
-
+```
 
 # Configure Kubernetes auth with proper paths
+```
 vault write auth/kubernetes/config \
   kubernetes_host="https://$KUBERNETES_SERVICE_HOST:$KUBERNETES_SERVICE_PORT" \
   token_reviewer_jwt="$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)" \
   kubernetes_ca_cert=@/var/run/secrets/kubernetes.io/serviceaccount/ca.crt \
   issuer="https://kubernetes.default.svc.cluster.local"
-
+```
 
 then create a secretengine  path using secret only path of kv v2 using this cmd:
-
+```
 vault secrets enable -path=secret kv-v2
-
+```
 then create a policy for the role to be used by the eso think of it like a ACL's:
-
+```
 vault policy write eso-policy - << EOF
 path "secret/data/*" {
   capabilities = ["read"]
 }
-
 path "secret/metadata/*" {
   capabilities = ["list"]
 }
 EOF
+```
 
 verify:
+```
 vault policy list
-
+```
 
 then attach this policy to this role we are creating
+```
 vault write auth/kubernetes/role/external-secrets-operator \
   bound_service_account_names=vault-auth \
   bound_service_account_namespaces=external-secrets \
   policies=eso-policy \
   ttl=1h
+```
 
-
+Store DB Credentials
+```
 vault kv put secret/database POSTGRES_USER="db_user" POSTGRES_PASSWORD="db_password" POSTGRES_DB="name_db"
+```
 
 5. Deploy ESO + SecretStore
 kubectl apply -f k8s-manifests/eso/
@@ -907,65 +948,7 @@ kubectl get svc -A
 10. Test API
 http://<minikube-ip>:32000/health
 
-Here is the second Options:
-This milestone focuses on deploying the REST API and its dependent services (database, migrations, secrets, configs) on Kubernetes.
-All Kubernetes manifests, namespaces, ConfigMaps, ESO (External Secrets Operator), and Vault-based secrets must be created and deployed using standard YAML manifests.
 
-📁 Repository Structure -make it done correct and also put it up before the deployment setup
-
-All Kubernetes manifests must be committed inside the same repository:
-
-k8s/
- ├── application.yml
- ├── database.yml
- │    
- ├── eso/
- │    ├── external-secret.yml
- │    ├── secret-store.yml
- │    └── vault-config.yml
- ├── vault/
- │    ├── deployment.yml
- │    ├── service.yml
- │    └── policies.hcl
- ├── namespaces/
- │    └── student-api-namespace.yml
- └── README.md
-
-
-Each component has a single manifest file containing all required resources.
-
-🏷 Namespaces
-
-All application and database resources must be deployed inside:
-
-student-api
-
-You can create it using:
-
-🐳 Application Component (application.yml)
-
-The application manifest includes:
-
-Namespace
-ConfigMap
-Deployment havooing init container to run the db migrations
-Service
-
-Environment variables should be provided using:
-
-✔ ConfigMaps — non-sensitive values such as API config, ports, debug flags
-✔ External Secrets (ESO) — sensitive values like DB credentials, token, password
-
-🛢 Database Component (database.yml)
-
-The database manifest contains:
-
-Namespace
-
-PVC
-StorageClass reference
-StatefulSet 
-Service
 
 DB migrations must run before the API container starts.
 
@@ -983,10 +966,6 @@ initContainers:
 This ensures migrations run once before the main application starts.
 
 
-Wait for pods:
-
-kubectl get pods -n student-api
-
 🧪 Testing the API (Postman)
 
 Once all pods are running and the service is exposed, test the API:
@@ -997,7 +976,6 @@ curl -i http://<YOUR-IP>:<PORT>/health
 Expected response:
 
 HTTP/1.1 200 OK
-
 
 After this, use the Postman collection included in the repository to test:
 
@@ -1630,6 +1608,7 @@ kubectl port-forward svc/grafana 3000:80 -n observability
 
 
 Open: http://localhost:3000
+
 
 
 
