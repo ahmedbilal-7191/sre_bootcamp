@@ -1,4 +1,5 @@
 # SRE Bootcamp – From Local to Production (Student CRUD REST API)
+
 Built as part of an intensive SRE Bootcamp, this repository demonstrates a complete production engineering workflow, where a microservice is developed, containerized, deployed, and fully observed using industry-standard SRE and DevOps practices.The project progresses through multiple stages of the production lifecycle using:
 
 - Containers
@@ -46,9 +47,8 @@ Built as part of an intensive SRE Bootcamp, this repository demonstrates a compl
 
 This milestone covers setting up the Student CRUD REST API locally using Python, virtual environments, PostgreSQL, migrations, and Makefile automation.
 
-### Quick Start:
+### Prerequisites:
 
-#### Prerequisites:
 Ensure the following are installed on your system:
 - Python 3.x (to run the API)
 - pip (Python package manager)
@@ -69,11 +69,13 @@ cp .env.example .env
 Update values as needed for your system.
 
 #### 3.Create & Activate a Virtual Environment
+
 ##### Linux / Mac
 ```
 python3 -m venv venv
 source venv/bin/activate
 ```
+
 ##### Windows
 ```
 python -m venv venv
@@ -85,11 +87,13 @@ Instead of installing manually, use:
 ```
 make build
 ```
+
 ##### This executes:
 - `python -m pip install --upgrade pip`
 - `pip install --no-cache-dir -r requirements.dev.txt`
 
 the current project has migrations folder to github so if wantt o use thaat  no need to initializa if begeing withou the migrations folder then 
+
 #### 5.Initialize DB Migrations (run once)
 ```
 make migrate-init
@@ -114,6 +118,7 @@ flask db upgrade
 ```
 
 #### 8.Start the API
+
 ##### Option A — Flask Dev Server
 ```
 make run
@@ -122,6 +127,7 @@ make run
 ```
 python run.py
 ```
+
 ##### Option B — Gunicorn (production style)
 ```
 make run-gunicorn
@@ -137,6 +143,7 @@ curl http://localhost:5000/healthcheck
 ```
 
 ### Makefile Commands
+
 | Command                               | Description                    |
 | ------------------------------------- | ------------------------------ |
 | `make run`                            | Start Flask API                |
@@ -150,6 +157,7 @@ curl http://localhost:5000/healthcheck
 
 
 ### Project Structure
+
 ```
 ├── .github/
 │   └── workflows/              # CI/CD workflow definitions (GitHub Actions)
@@ -199,8 +207,8 @@ curl http://localhost:5000/healthcheck
 This structure supports clean scalability as the project progresses toward Docker, CI/CD, Kubernetes, Helm, ArgoCD, and Observability in later milestones.
 
 ### Architecture Overview
-#### layered design:
 
+#### layered design:
 
           ┌──────────────────────────────┐
           │          Client / UI         │
@@ -240,7 +248,7 @@ This structure supports clean scalability as the project progresses toward Docke
                            │
                            ▼
          ┌────────────────────────────────────────┐
-         │            PostgreSQL / SQLite         │
+         │            PostgreSQL                  │
          │         (via SQLAlchemy ORM)           │
          └────────────────────────────────────────┘
 
@@ -252,6 +260,7 @@ The REST API stores student records in a SQL database using SQLAlchemy ORM.
 The table is created using the following model:
 
 ### `Students` Table Schema
+
 | Column       | Type        | Constraints                         | Description                        |
 | ------------ | ----------- | ----------------------------------- | ---------------------------------- |
 | `id`         | Integer     | Primary Key, Auto-increment         | Unique identifier for each student |
@@ -308,7 +317,6 @@ Runs:
 `pytest -v --cov=app --cov-report=term-missing`
 
 ### Logging
-
 ```
 {
   "timestamp": "2025-01-10T12:45:20Z",
@@ -321,6 +329,7 @@ Runs:
 ------------------------------------------------------------------------
 
 ## Milestone 2 – Containerise REST API
+
 This milestone focuses on Dockerizing the REST API following industry-standard best practices. The implementation includes building a multi-stage Dockerfile, injecting environment variables at runtime, optimizing the image size for production, tagging images using Semantic Versioning (SemVer), and running the API entirely inside Docker.
 
 ### Prerequisites
@@ -329,8 +338,7 @@ Before proceeding, ensure the following tools are installed:
 
 #### Docker Engine
 
-#### 1.Install Docker using the official production-grade steps for Ubuntu:
-
+##### 1.Install Docker using the official production-grade steps for Ubuntu:
 ```
 # Add Docker GPG key and repository (Ubuntu)
 sudo apt update
@@ -340,7 +348,8 @@ sudo install -m 0755 -d /etc/apt/keyrings
 sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
 sudo chmod a+r /etc/apt/keyrings/docker.asc
 ```
-#### 2.Add the Docker repository:
+
+##### 2.Add the Docker repository:
 ```
 echo \
 "Types: deb
@@ -350,27 +359,31 @@ Components: stable
 Signed-By: /etc/apt/keyrings/docker.asc" |
 sudo tee /etc/apt/sources.list.d/docker.sources > /dev/null
 ```
-#### 3.Install Docker:
+
+##### 3.Install Docker:
 ```
 sudo apt update
 sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 ```
 
-#### 4.Verify installation:
+##### 4.Verify installation:
 ```
 docker --version
 docker compose version
 ```
 
-#### 5.Add User to Docker Group
-#### Allows running Docker without sudo:
+##### 5.Add User to Docker Group
+
+##### Allows running Docker without sudo:
 ```
 sudo usermod -aG docker $USER
 newgrp docker
 ```
 
 ### Docker Usage Instructions
+
 #### 1.Build Docker Image
+
 Without Makefile:
 ```
 docker build -t my-api:1.0.0 .
@@ -379,7 +392,9 @@ With Makefile:
 ```
 make docker-build
 ```
+
 #### 2.Run the API Container
+
 Without Makefile:
 ```
 docker run -p 5000:5000 \
@@ -401,12 +416,13 @@ This milestone focuses on simplifying local development, enabling any team membe
 ### Makefile Targets
 
 #### The Makefile now includes targets to automate:
+
 | Target                        | Description                                 |
 | ----------------------------- | ------------------------------------------- |
 | `make db-up`                  | Starts the database service                 |
 | `make db-down`                | Runs database DML migrations                |
 | `make db-status`              | Show database container status            |
-| `make docker-build`              | Build the REST API Docker image (SemVer tagging supported) | i think these two can be put in milestone 2 
+| `make docker-build`              | Build the REST API Docker image (SemVer tagging supported) | 
 | `make docker-run` | Run the API container using `.env`  |
 | `make compose-build`  | Build all Docker Compose services  |
 | `make compose-up`  | Start DB → run migrations → start API  |
@@ -455,7 +471,8 @@ This ensures the stack is fully functional with a single command.
 make compose-down
 ```
 
-## Docker Compose Overview
+### Docker Compose Overview
+
 #### The docker-compose.yml defines:
 - database service
 - api service
@@ -495,7 +512,9 @@ Builds and pushes Docker images using either Makefile targets or GitHub’s offi
 All core actions—build, test, and lint—are executed via Makefile targets to avoid duplicating logic in CI scripts.
 
 ### Self-Hosted GitHub Runner
+
 #### The pipeline runs on a self-hosted runner installed locally.
+
 #### Key features:
 - Manual Trigger Enabled:
 Can be run on-demand via GitHub Actions UI using:
@@ -510,7 +529,8 @@ This milestone focuses on deploying the REST API and supporting services on a ba
 
 ![milestone5-j](https://github.com/user-attachments/assets/69cd861a-a193-47de-bee9-37b6bf89c6ba)
 
-#### Repository Requirements
+### Repository Requirements
+
 ```
 ├── Vagrantfile
 ├── Dockerfile
@@ -531,6 +551,7 @@ This milestone focuses on deploying the REST API and supporting services on a ba
 - VirtualBox
 
 ### Step-by-Step Local Setup
+
 #### 1.Start the VM
 ```
 vagrant up
@@ -572,7 +593,8 @@ curl http://localhost:8080/healthcheck
 Status: 200 OK
 Traffic load-balanced across both APIs
 
-#### Functional Validation
+### Functional Validation
+
 #### After deployment:
 
 - API must be accessible at:
@@ -583,6 +605,7 @@ http://<vm-ip>:8080
 - All API endpoints return HTTP 200 OK when tested with Postman
 
 ### Stop and remove bare-metal deployment
+
 ```
 make destroy-baremetal
 ```
@@ -604,7 +627,9 @@ upstream api_backend {
 ```
 
 ### Deployment Overview
+
 #### The deployment stack includes:
+
 - Vagrant – provisions the bare-metal VM
 - Bash Script – automates OS setup, installs Docker, Docker Compose, Git, Python, and adds users to the Docker group
 - Docker Compose – orchestrates containers (API, DB, Nginx)
@@ -612,49 +637,54 @@ upstream api_backend {
 - Nginx – load balances traffic across multiple API replicas
 
 -------------------
+
 ## Milestone 6 — Setup Kubernetes Cluster
+
 This milestone focuses on setting up a production-like Kubernetes cluster using Minikube with three worker nodes, each labeled to represent different workload responsibilities.
 This prepares the cluster for deploying the application, database, and dependent services in later milestones.
 
 ### Prerequisites:
+
 #### Ensure the following tools are installed on your system:
+
 - minikube
 https://minikube.sigs.k8s.io/docs/start/?arch=%2Flinux%2Fx86-64%2Fstable%2Fbinary+download 
 - kubectl
 https://kubernetes.io/docs/tasks/tools/
+#### Verify installation:
 
-### Verify installation:
 ```
 minikube version
 kubectl version --client
 ```
 ### Step-by-Step Local Setup
+
 #### 1.Create a Multi-Node Minikube Cluster
 ```
 minikube start --nodes 4 -p prod-cluster
 ```
-
-#### verify nodes:
+##### verify nodes:
 ```
 kubectl get nodes
 ```
 
 #### 2️.Label the Worker Nodes Appropriately
 
-#### Add labels to instruct the scheduler where to run future workloads:
+##### Add labels to instruct the scheduler where to run future workloads:
 
 Worker Node	Label
 Node A	type=application
 Node B	type=database
 Node C	type=dependent_services
 
-#### Example:
-
+##### Example:
+```
 kubectl label node prod-cluster-m02 type=application
 kubectl label node prod-cluster-m03 type=database
 kubectl label node prod-cluster-m04 type=dependent_services
+```
 
-#### verify lables:
+##### verify lables:
 ```
 kubectl get nodes --show-labels
 ```
@@ -674,22 +704,25 @@ minikube addons enable csi-hostpath-driver -p prod-cluster
 This enables CSI-backed dynamic volume provisioning, which is required for stateful workloads in multi-node clusters.
 
 #### 4️.Configure the Default StorageClass
+
 Minikube’s default standard StorageClass is not suitable for multi-node workloads. To ensure reliable storage provisioning for stateful components, the CSI HostPath StorageClass is configured as the default for this cluster.
 
-#### 4.1 Set CSI HostPath as Default
+##### 4.1 Set CSI HostPath as Default
 
-#### Edit the CSI StorageClass:
+###### Edit the CSI StorageClass:
 ```
 kubectl edit storageclass csi-hostpath-sc
 ```
 
-#### Ensure it includes:
+###### Ensure it includes:
 ```
 metadata:
   annotations:
     storageclass.kubernetes.io/is-default-class: "true"
 ```
+
 #### 4.2 (Optional but Recommended) Remove Default Annotation from Old StorageClass
+
 To avoid conflicts between multiple default StorageClasses, remove the default annotation from Minikube’s standard StorageClass:
 ```
 kubectl patch storageclass standard -p \
@@ -698,13 +731,13 @@ kubectl patch storageclass standard -p \
 What This Ensures
 With CSI HostPath configured as the default, all future PVCs automatically use it. PersistentVolumes are created on the same node where the Pod is scheduled, making this setup ideal for databases and other stateful components.
 
-#### Why CSI HostPath Matters
+### Why CSI HostPath Matters
 
 The default Minikube storage works reliably only in single-node clusters. In a multi-node setup, CSI HostPath ensures that each worker node uses its own CSI driver and that volumes are provisioned per node. This allows storage to fully respect Kubernetes pod scheduling decisions.
 
 This design aligns naturally with node-based workload placement, ensuring that database pods, application pods, and dependent services use storage from the same nodes on which they run, preventing cross-node storage conflicts.
 
-#### volumeBindingMode: WaitForFirstConsumer
+### volumeBindingMode: WaitForFirstConsumer
 
 The CSI HostPath StorageClass uses volumeBindingMode: WaitForFirstConsumer. This means Kubernetes does not provision a PersistentVolume immediately. Instead, it waits until the Pod is scheduled and then creates the volume on the same node as the Pod.
 
@@ -720,6 +753,7 @@ In this milestone, we migrate from bare-metal Vagrant deployments to Kubernetes-
 
 
 ### Repository Structure (Kubernetes Manifests)
+
 #### All Kubernetes manifests are committed to the same repository under the following structure:
 ```
 k8s-manifests/
@@ -740,7 +774,7 @@ kubectl create namespace vault
 kubectl create namespace external-secrets
 ```
 
-## Optional: Enable TLS for Vault
+### Optional: Enable TLS for Vault
 -------------
 #### Generate a CA certificate:
 ```
@@ -756,6 +790,7 @@ openssl req -new -key tls.key -out vault.csr -config vault-cert.cnf
 openssl x509 -req -in vault.csr -CA ca.crt -CAkey ca.key -CAcreateserial \
   -out tls.crt -days 3650 -sha256 -extfile vault-cert.cnf -extensions req_ext
 ```
+
 #### files generated:
 `
 certs$ ls
@@ -774,7 +809,6 @@ kubectl -n vault create secret generic vault-tls \
 ### Deployment Steps:
 
 #### 1.Deploy Vault (Node C – dependent_services)
-
 ```
 kubectl apply -f k8s-manifests/vault/
 ```
@@ -792,14 +826,14 @@ Unseal the remaining Vault pods (vault-1, vault-2).
 vault operator raft list-peers
 ```
 
-#### Enable Kubernetes Authentication in Vault
+##### Enable Kubernetes Authentication in Vault
 
 ##### Enable Kubernetes authentication
 ```
 vault auth enable kubernetes
 ```
 
-#### Configure Kubernetes authentication:
+##### Configure Kubernetes authentication:
 ```
 vault write auth/kubernetes/config \
   kubernetes_host="https://$KUBERNETES_SERVICE_HOST:$KUBERNETES_SERVICE_PORT" \
@@ -808,12 +842,12 @@ vault write auth/kubernetes/config \
   issuer="https://kubernetes.default.svc.cluster.local"
 ```
 
-#### Enable KV v2 secrets engine:
+##### Enable KV v2 secrets engine:
 ```
 vault secrets enable -path=secret kv-v2
 ```
 
-#### Create policy for ESO:
+##### Create policy for ESO:
 ```
 vault policy write eso-policy - << EOF
 path "secret/data/*" {
@@ -824,13 +858,12 @@ path "secret/metadata/*" {
 }
 EOF
 ```
-
-#### verify:
+##### verify:
 ```
 vault policy list
 ```
 
-#### Create Vault role for ESO:
+##### Create Vault role for ESO:
 ```
 vault write auth/kubernetes/role/external-secrets-operator \
   bound_service_account_names=vault-auth \
@@ -839,12 +872,13 @@ vault write auth/kubernetes/role/external-secrets-operator \
   ttl=1h
 ```
 
-#### Store database credentials:
+##### Store database credentials:
 ```
 vault kv put secret/database POSTGRES_USER="db_user" POSTGRES_PASSWORD="db_password" POSTGRES_DB="name_db"
 ```
 
 #### 2.Deploy External Secrets Operator (ESO)
+
 ESO is deployed using Helm and rendered into Kubernetes manifests
 
 helm template external-secrets \
@@ -901,6 +935,7 @@ Database migrations are executed using an init container before the main applica
 This ensures migrations run once and before application startup.
 
 ### Verification
+
 #### Verify pods and services:
 ```
 kubectl get pods -A
@@ -937,6 +972,7 @@ In this milestone, we transition from raw Kubernetes manifests to Helm-based dep
 Helm enables packaging, versioning, configuration overrides, and reusable deployments, making the setup closer to production standards.
 
 ### Helm Repository Structure
+
 ```
 helm-charts/
 ├── backend/
@@ -948,7 +984,9 @@ helm-charts/
     └── eso-fin-1.yaml
 
 ```
+
 ### Deployment Workflow Using Helm
+
 #### 1.Deploy Vault (Infrastructure)
 
 Vault is deployed first since it is required by ESO.
@@ -1053,9 +1091,9 @@ POST /students  → 200 OK
 All CRUD endpoints must return 200 OK.
 
 --------------------------------------------------------
+
 ## Milestone 9 — Setup One-Click Deployments Using ArgoCD
 
-### Objective
 This milestone introduces GitOps-based automated deployments using ArgoCD.
 Instead of manually running kubectl apply or helm install, ArgoCD continuously watches the Git repository and automatically synchronizes Kubernetes state whenever changes are pushed.
 ![milestone9-j](https://github.com/user-attachments/assets/c4ff0787-d450-4efe-8777-d5185e99819b)
@@ -1149,6 +1187,7 @@ What Happens After CI Success
 ArgoCD automatically detects the update and deploys the new version — true one-click deployment.
 
 ### Access ArgoCD UI (Optional)
+
 #### Port-forward ArgoCD Server
 ```
 kubectl port-forward svc/argocd-server -n argocd 8080:80
@@ -1508,6 +1547,7 @@ kubectl port-forward svc/grafana 3000:80 -n observability
 
 
 Open: http://localhost:3000
+
 
 
 
