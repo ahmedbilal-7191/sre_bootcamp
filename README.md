@@ -10,7 +10,7 @@ Built as part of an intensive SRE Bootcamp, this repository demonstrates a compl
 - Observability stack (Prometheus, Loki, Grafana, Alertmanager)
 - Dashboards & Alerts
 
-### Tech Stack(Application)
+## Tech Stack(Application)
 
 | Component   | Technology           |
 | ----------- | -------------------- |
@@ -26,7 +26,7 @@ Built as part of an intensive SRE Bootcamp, this repository demonstrates a compl
 | Testing     | pytest, pytest-flask |
 | Linting     | pylint, flake8       |
 
-### DevOps & SRE Tooling
+## DevOps & SRE Tooling
 
 - Docker & Docker Compose
 - GitHub Actions CI/CD
@@ -53,7 +53,6 @@ Ensure the following are installed on your system:
 - Python 3.x (to run the API)
 - pip (Python package manager)
 - PostgreSQL (for the database)
-
 
 ### Local Setup Instructions:
 
@@ -540,7 +539,7 @@ What This Does
 - Provisions Ubuntu VM
 - Installs Docker, Compose, Make
 
-#### 2.Deploy Full Stack add image here 
+#### 2.Deploy Full Stack 
 ```
 cd /vagrant
 make deploy-baremetal
@@ -555,6 +554,9 @@ Starts:
 1 Nginx load balancer
 
 Runs DB migrations automatically
+![milestone5-j](https://github.com/user-attachments/assets/69cd861a-a193-47de-bee9-37b6bf89c6ba)
+
+
 
 #### 3.Access API (via Nginx)
 ```
@@ -712,7 +714,8 @@ This behavior prevents common issues such as Pods stuck in a Pending state, volu
 
 In this milestone, we migrate from bare-metal Vagrant deployments to Kubernetes-based deployments using Minikube. The Student REST API, PostgreSQL database, and dependent services such as HashiCorp Vault and External Secrets Operator (ESO) are deployed on a 3-node Minikube cluster created in the previous milestone.
 
-add a image here 
+add a image here ![milestone7-j](https://github.com/user-attachments/assets/d2782692-730f-476d-a47a-bf61b49018d7)
+
 
 ### Repository Structure (Kubernetes Manifests)
 #### All Kubernetes manifests are committed to the same repository under the following structure:
@@ -1054,6 +1057,7 @@ All CRUD endpoints must return 200 OK.
 ### Objective
 This milestone introduces GitOps-based automated deployments using ArgoCD.
 Instead of manually running kubectl apply or helm install, ArgoCD continuously watches the Git repository and automatically synchronizes Kubernetes state whenever changes are pushed.
+![milestone9-j](https://github.com/user-attachments/assets/c4ff0787-d450-4efe-8777-d5185e99819b)
 
 ### Repository Layout for GitOps
 
@@ -1503,6 +1507,7 @@ kubectl port-forward svc/grafana 3000:80 -n observability
 
 
 Open: http://localhost:3000
+
 
 
 
