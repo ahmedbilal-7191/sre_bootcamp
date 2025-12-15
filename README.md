@@ -508,6 +508,8 @@ GitHub Docs – Add self-hosted runners: https://docs.github.com/en/actions/how-
 ## Milestone 5 — Deploy REST API & Dependent Services on Bare Metal
 This milestone focuses on deploying the REST API and supporting services on a bare-metal VM using Vagrant, Bash provisioning, Docker Compose, and Nginx load balancing.
 
+![milestone5-j](https://github.com/user-attachments/assets/69cd861a-a193-47de-bee9-37b6bf89c6ba)
+
 #### Repository Requirements
 ```
 ├── Vagrantfile
@@ -554,7 +556,7 @@ Starts:
 1 Nginx load balancer
 
 Runs DB migrations automatically
-![milestone5-j](https://github.com/user-attachments/assets/69cd861a-a193-47de-bee9-37b6bf89c6ba)
+
 
 
 
@@ -714,7 +716,7 @@ This behavior prevents common issues such as Pods stuck in a Pending state, volu
 
 In this milestone, we migrate from bare-metal Vagrant deployments to Kubernetes-based deployments using Minikube. The Student REST API, PostgreSQL database, and dependent services such as HashiCorp Vault and External Secrets Operator (ESO) are deployed on a 3-node Minikube cluster created in the previous milestone.
 
-add a image here ![milestone7-j](https://github.com/user-attachments/assets/d2782692-730f-476d-a47a-bf61b49018d7)
+![milestone7-j](https://github.com/user-attachments/assets/d2782692-730f-476d-a47a-bf61b49018d7)
 
 
 ### Repository Structure (Kubernetes Manifests)
@@ -931,7 +933,6 @@ All endpoints should return 200 OK.
 ---------------------------
 ## Milestone 8 – Deploy REST API & Dependent Services Using Helm Charts
 
-Objective
 In this milestone, we transition from raw Kubernetes manifests to Helm-based deployments for the REST API, PostgreSQL database, Vault, and External Secrets Operator (ESO).
 Helm enables packaging, versioning, configuration overrides, and reusable deployments, making the setup closer to production standards.
 
@@ -1507,6 +1508,7 @@ kubectl port-forward svc/grafana 3000:80 -n observability
 
 
 Open: http://localhost:3000
+
 
 
 
