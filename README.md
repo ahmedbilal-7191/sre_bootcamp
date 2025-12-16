@@ -1206,360 +1206,275 @@ kubectl get secret argocd-initial-admin-secret \
 ```
 ----------------------------------
 
-## Milestone 10 — Setup an Observability Stack (Prometheus, Loki, Grafana, Promtail) TO Be Done
-Objective
+## Milestone 10 — Setup an Observability Stack (Prometheus, Loki, Grafana, Promtail) 
+This milestone focuses on setting up a complete observability stack in Kubernetes using Prometheus, Loki, and Grafana, deployed on the dependent_services node under the observability namespace.
 
-This milestone focuses on setting up a complete observability stack using:
+The setup enables:
 
-Prometheus → Metrics
+- Centralized metrics collection
+- Centralized log aggregation
+- Database monitoring
+- Internal endpoint monitoring
+- Unified visualization via Grafana
 
-Loki → Logs
+### Components Overview
 
-Promtail → Log collection
+#### Prometheus (kube-prometheus-stack)
 
-Grafana → Visualization
+##### Scrapes:
+- Node metrics
+- kube-state-metrics
+- DB exporter metrics
+- Blackbox exporter metrics
 
-DB Metrics Exporter → Database monitoring
+##### Includes:
+- Alertmanager
+- Custom infra alerts (CPU & storage)
 
-Blackbox Exporter → Endpoint monitoring
+Deployed in observability namespace
 
-The goal is to achieve full visibility into the REST API, database, Vault, ArgoCD, and all dependent services deployed in the Kubernetes cluster.
+#### Loki
+- Central log storage
+- Uses Loki Gateway
+- Integrated with Grafana for log querying
 
-Learning Outcomes
+#### Promtail
+- Collects only application logs
+- Configured via quick2.yaml
+- Sends logs exclusively to Loki Gateway
 
-By completing this milestone, you will learn:
+#### PostgreSQL Exporter
+- Monitors DB metrics for backend API(Running in the student-api ns)
+- Uses External Secrets to fetch DB credentials securely
 
-Concepts of monitoring, logging, and observability
+#### Blackbox Exporter
+- Monitors internal HTTP/HTTPS endpoints
+- Used for service availability and health checks
 
-Prometheus metrics collection
+#### Grafana
+- Deployed with Helm
+- Configured datasources:
+  - Prometheus → Metrics
+  - Loki → Logs
+- Secrets for admin credentials managed via Helm templates
+- Dashboards & alerts enabled
 
-Loki log indexing & querying
+### Secrets & External Secrets
+The following components manage secrets internally via Helm templates or External Secrets:
+| Component             | Secret Handling                         |
+| --------------------- | --------------------------------------- |
+| Grafana               | External secrets                        |
+| Alertmanager(API URL) | External Secrets                        |
+| PostgreSQL Exporter   | External Secrets                        |
+| Backend API           | ServiceMonitor & alerts via Helm values |
 
-Promtail log scraping
+### Important Note (Alerts & Monitoring)
 
-Grafana dashboards
+If alerts or ServiceMonitors were disabled in previous milestones (ArgoCD, Vault, Backend API),
+re-enable them now after setting up the logging and monitoring stack.
 
-Exporters for application, DB, and network endpoint monitoring
+This ensures:
 
-Configuring Kubernetes node selectors for dedicated observability workloads
-
-
-We need to deploy a complete PLG (Promtail, Loki, Grafana) stack with Prometheus to monitor:
-
-Our REST API
-
-Database
-
-Vault
-
-ArgoCD server
-
-All node-level metrics
-
-Application logs
-
-Endpoint uptime & latency
-
-Kubernetes cluster state
-
-The scope includes:
-
-Deploy all observability workloads on the dependent_services node.
-
-Use Helm charts for all components.
-
-Store all Helm charts/configs in the same GitHub repository in the correct structure.
-
-
- 7. Directory Structure (Helm Charts & Configs)
-
-Ensure all charts and configs are committed in your GitHub repository:
-
-helm/
-  observability/
-    prometheus/
-    loki/
-    grafana/
-    promtail/
-    blackbox-exporter/
-    db-exporter/
-    kube-state-metrics/
-    node-exporter/
-
-observability-configs/
-  dashboards/
-  loki-values.yaml
-  prom-values.yaml
-  promtail-values.yaml
-
- Deployment Instructions (README)
-note: also make sure you enable (by default enable the alerts and monitroing form the argocd,vault,backedn app if disabled duing the deployment using helm previoius milestone once after settting up the log an dmonitoring setup )
-the helm charts for the observability stack is present locally with the override values.yaml 
-also in the logging and monitoring stack we have the secrets for grafana ,alertmanager the db exporter we can also use the existing secret for this to work of the backedn secret then also the externla serets are there in their own respective folders like postgrasdb exporter template fodler has its own  externalresourece sam egoes for kube prom (alermanager) and the grafan has secerets in its on helm chart also lalerts are with them too the backedn api app has it sown alert and svc monitoring in ts template folder from valuesyaml we can envble it also the kube prmetheus stack has their own too 
+Metrics are scraped correctly
+Alerts are fired as expected
+Dashboards show complete data
 
 
-1. Create namespace
+
+### Deployment Instructions
+#### Step 1: Create Namespace
+```
 kubectl create namespace observability
+```
 
-2. Label the dependent_services node
-kubectl label node <NODE_NAME> type=dependent_services
+#### Step 2: Deploy kube-prometheus-stack
+```
+helm install prometheus \
+  ./kube-prometheus-stack \
+  -f ./override-values/values-kube-prome-stack.yaml \
+  -n observability
+```
 
-3. Deploy Prometheus + exporters
-helm install prometheus ./helm/observability/prometheus -n observability
+#### Step 3: Deploy Loki
+```
+helm install loki \
+  ./loki \
+  -f ./override-values/loki-doc.yaml \
+  -n observability
+```
 
-4. Deploy Loki
-helm install loki ./helm/observability/loki -n observability
+#### Step 4: Deploy Promtail (Application Logs Only)
+```
+helm install promtail \
+  ./promtail \
+  -f ./override-values/quick2.yaml \
+  -n observability
+```
 
-5. Deploy Promtail
-helm install promtail ./helm/observability/promtail -n observability
+#### Step 5: Deploy PostgreSQL Exporter
+```
+helm install postgres-exporter \
+  ./postgres-exporter \
+  -f ./override-values/values-postgres-exporter.yaml \
+  -n observability
+```
 
-6. Deploy Grafana
-helm install grafana ./helm/observability/grafana -n observability
+#### Step 6: Deploy Blackbox Exporter
+```
+helm install blackbox-exporter \
+  ./blackbox-exporter \
+  -f ./override-values/values-blackbox-exporter.yaml \
+  -n observability
+```
 
-7. Deploy DB exporter
-helm install db-exporter ./helm/observability/db-exporter -n observability
+#### Step 7: Deploy Grafana
+helm install grafana \
+  ./grafana \
+  -f ./override-values/values-grafana.yaml \
+  -n observability
 
-8. Deploy Blackbox exporter
-helm install blackbox ./helm/observability/blackbox-exporter -n observability
+
+### Validation Checklist
+
+- Prometheus targets show UP
+- Loki receiving application logs
+- Grafana dashboards load metrics & logs
+- DB exporter metrics visible
+- Blackbox probes reporting status
+- Alerts visible in Alertmanager
 
 ---------------------------------------------
 
-11 – Configure Dashboards & Alerts
- Learning Outcomes
-
-By completing this milestone, you will gain hands-on knowledge of:
-
-Key Observability Pillars (Logs, Metrics, Traces)
-
-USE (Utilization, Saturation, Errors) and RED (Rate, Errors, Duration) metrics
-
-Grafana dashboards creation & management
-
-Alerting best practices (Prometheus + Alertmanager + Slack notifications)
-
- 
-
-Application performance
-
-Database health
-
-System resource utilization
-
-Kubernetes object states
-
-External endpoint uptime via Blackbox exporter
-
-Error spikes + latency issues
-
-All dashboards and alerts must be created declaratively and stored inside the GitHub repository.
-
-Expectations
-
-To successfully complete this milestone, ensure all of the following requirements are met.
-
-✔️ Grafana Dashboards
-
-You must configure and store dashboards for the following categories.
-Dashboards should be imported as JSON files inside:
-
-helm/observability-stack/grafana/dashboards/
-
-Required dashboards:
-1. DB Metrics Dashboard
-
-DB CPU/Mem usage
-
-Query throughput
-
-Slow queries
-
-Connection count
-
-Exported metrics via DB exporter
-
-2. Application Error Logs Dashboard
-
-Uses Loki as the datasource:
-
-Error count grouped by service
-
-Correlation by pod/container
-
-Filters for severity levels
-
-Time-based error trends
-
-3. Node Metrics Dashboard
-
-Uses node-exporter + Prometheus:
-
-CPU load
-
-Memory utilization
-
-Disk I/O
-
-Network traffic
-
-4. Kube-State Metrics Dashboard
-
-Using kube-state-metrics data:
-
-Pod restarts
-
-Deployment state
-
-CrashLoopBackOff
-
-Replica counts
-
-5. Blackbox Exporter Dashboard
-
-For external & internal endpoints:
-
-Uptime
-
-Response status codes
-
-Latency (p50/p90/p95/p99)
-
-Probe success/failures
-
-✔️ Alerting Requirements
-Alerts must be defined as PrometheusRule CRDs stored at:
-helm/observability-stack/prometheus/alerts/
-
-Required alert types:
-1. Disk & CPU Utilization
-
-node_cpu_usage > X%
-
-node_disk_usage > Y%
-
-2. Spike in Application Error Rate
-
-Example:
-
-increase({job="api"} |= "ERROR" [10m]) > threshold
-
-3. Latency Threshold Alerts
-
-Monitor p90, p95, p99:
-
-histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le))
-
-4. High Request Rate
-
-Detect traffic spikes:
-
-increase(http_requests_total[5m]) > threshold
-
-5. Pod Restart Alerts
-
-Specifically for:
-
-DB
-
-HashiCorp Vault
-
-ArgoCD Server
-
-Example:
-
-increase(kube_pod_container_status_restarts_total[10m]) > 0
-
-✔️ Slack Notification Integration
-
-You must configure Alertmanager to send alerts to Slack.
-
-Steps:
-
-Create a Slack Incoming Webhook URL
-
-Add a Kubernetes Secret:
-
-kubectl create secret generic alertmanager-slack-config \
-  --from-literal=slack_api_url=<YOUR_WEBHOOK>
-
-
-Reference this secret in alertmanager.yaml
-
-Configure receivers and routes for:
-
-Critical alerts
-
-Warning alerts
-
-Info alerts
-
-Stored at:
-
-helm/observability-stack/alertmanager/config/
-
-
-Alerts should post descriptive messages including:
-
-Alert name
-
-Affected component
-
-Namespace
-
-Node
-
-Current value
-
-Suggested resolution
-
-📁 Directory Structure (Required)
-helm/
-  observability-stack/
-    grafana/
-      dashboards/
-        db-metrics.json
-        app-logs.json
-        node-metrics.json
-        kube-state.json
-        blackbox.json
-    prometheus/
-      alerts/
-        cpu-disk-alerts.yaml
-        latency-alerts.yaml
-        error-rate-alerts.yaml
-        request-rate-alerts.yaml
-        pod-restart-alerts.yaml
-    alertmanager/
-      config/
-        alertmanager.yaml
-
-🚀 Deployment Instructions (Add to README.md)
-1. Deploy Observability Helm Chart
-cd helm/observability-stack
-helm upgrade --install observability . -n observability
-
-2. Verify Components
-kubectl get pods -n observability
-kubectl get prometheusrules -n observability
-kubectl get grafanadashboards -n observability
-
-3. Access Grafana
-kubectl port-forward svc/grafana 3000:80 -n observability
-
-
-Open: http://localhost:3000
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+## 11 – Configure Dashboards & Alerts
+
+This milestone focuses on operational observability at runtime by configuring Grafana dashboards and Prometheus alerts to monitor system health, application behavior, and infrastructure reliability.
+Additionally, Slack notifications are configured to ensure alerts are delivered with clear, actionable messages.
+
+### Repository Structure (Relevant)
+
+```
+logging-monitoring/
+├── blackbox-exporter/
+├── grafana/
+│   ├── dashboards/
+│   │   ├── application.json
+│   │   ├── custom-dashboard.json
+│   │   ├── kube-state.json
+│   │   ├── node-exporter-dashboard.json
+│   │   └── postgres-exporter.json
+│   └── values.yaml
+├── kube-prometheus-stack/
+│   └── templates/
+│       └── alertmanager/
+│           └── externalsecret.yaml   # Slack webhook secret
+└── override-values/
+    └── values-kube-prome-stack.yaml
+
+```
+
+### Grafana Dashboards Configuration
+
+#### All Grafana dashboards are version-controlled and stored under:
+```
+logging-monitoring/grafana/dashboards/
+```
+
+#### Configured Dashboards
+
+| Dashboard                      | Purpose                                          |
+| ------------------------------ | ------------------------------------------------ |
+| `postgres-exporter.json`       | Database metrics (connections, queries, latency) |
+| `application.json`             | Application metrics & error visualization        |
+| `custom-dashboard.json`        | Aggregated service-level metrics                 |
+| `node-exporter-dashboard.json` | Node CPU, memory, disk, network                  |
+| `kube-state.json`              | Pod, deployment, replica & resource states       |
+
+
+#### Alerting Strategy
+
+#### Infrastructure Alerts (Prometheus)
+
+Defined under:
+```
+kube-prometheus-stack/templates/prometheus/custom-alerts/
+```
+Alerts include:
+- High CPU utilization
+- High disk utilization
+
+These alerts apply cluster-wide and run in the observability namespace.
+
+#### Application Alerts
+Defined inside the backend Helm chart under:
+```
+backend/templates/
+```
+Application-level alerts include:
+- Error rate spike in last 10 minutes
+- Increased request rate
+- Latency threshold breaches:
+  - p90
+  - p95
+  - p99
+These alerts are enabled via backend Helm values.yaml.
+
+#### Restart Alerts
+Restart alerts for:
+- Database
+- HashiCorp Vault
+- ArgoCD
+
+are enabled via:
+```
+override-values/values-kube-prome-stack.yaml
+```
+using Alertmanager rules exposed by kube-prometheus-stack.
+
+#### Slack Alert Notifications
+
+All alerts are delivered to Slack with descriptive messages.
+
+Slack Integration Details
+
+Slack Webhook URL is NOT hardcoded
+
+Retrieved securely using External Secrets
+
+ExternalSecret is located at:
+```
+kube-prometheus-stack/templates/alertmanager/externalsecret.yaml
+```
+
+#### Alert Scenarios Covered
+| Scenario                       | Alert Source            |
+| ------------------------------ | ----------------------- |
+| CPU & Disk threshold breach    | Prometheus infra alerts |
+| Error rate spike (10 min)      | Backend alerts          |
+| Latency increase (p90/p95/p99) | Backend alerts          |
+| High request volume            | Backend alerts          |
+| DB restart                     | kube-state-metrics      |
+| Vault restart                  | kube-state-metrics      |
+| ArgoCD restart                 | kube-state-metrics      |
+
+#### Deployment Notes
+
+#### Important
+Ensure alerting and ServiceMonitor flags are enabled for:
+- Backend application
+- ArgoCD
+- Vault
+If they were disabled in earlier milestones, re-enable them now to ensure:
+
+- Metrics are scraped
+- Alerts are triggered
+- Dashboards show complete data
+
+#### Validation Checklist
+- All Grafana dashboards load successfully
+- Prometheus targets are UP
+- Loki logs visible for application
+- Alerts appear in Alertmanager UI
+- Slack receives alert notifications
+- Restart alerts trigger on pod restarts
+
+Wherer to access the prometehus,grafana ,alertmanager argocd,vault,application,loki gateway etc prober blackbox with portnumbers
