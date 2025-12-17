@@ -1,118 +1,164 @@
-## SRE Bootcamp – From Local to Production (Student CRUD REST API)
+# SRE Bootcamp – From Local to Production (Student CRUD REST API)
 
-This repository is part of the SRE Bootcamp – Part One: From Local to Production, where we build, containerize, deploy, and observe a production-grade microservice.
-The journey begins by developing a simple REST API and evolves step-by-step into a fully automated and observable production deployment using:
+Built as part of an intensive SRE Bootcamp, this repository demonstrates a complete production engineering workflow, where a microservice is developed, containerized, deployed, and fully observed using industry-standard SRE and DevOps practices.The project progresses through multiple stages of the production lifecycle using:
 
-Containers
+- Containers
+- CI/CD pipelines
+- Bare-metal deployments
+- Kubernetes
+- Helm Charts
+- GitOps with ArgoCD
+- Observability stack (Prometheus, Loki, Grafana, Alertmanager)
+- Dashboards & Alerts
 
-CI/CD pipelines
+## Tech Stack(Application)
 
-Bare-metal deployments
+| Component   | Technology           |
+| ----------- | -------------------- |
+| Language    | Python 3             |
+| Framework   | Flask                |
+| ORM         | SQLAlchemy           |
+| DB          | PostgreSQL           |
+| Migrations  | Flask-Migrate        |
+| Validation  | Marshmallow          |
+| Logging     | python-json-logger   |
+| Metrics     | prometheus-client    |
+| WSGI Server | gunicorn             |
+| Testing     | pytest, pytest-flask |
+| Linting     | pylint, flake8       |
 
-Kubernetes
+## DevOps & SRE Tooling
 
-Helm Charts
-
-GitOps with ArgoCD
-
-Observability stack (Prometheus, Loki, Grafana, Alertmanager)
-
-Dashboards & Alerts
-
-The goal is to learn real-world SRE workflows by building everything from scratch.
-
-Features are above or add some more
-
-📦 Tech Stack
-Component	Technology
-Language	Python 3
-Framework	Flask
-ORM	SQLAlchemy
-DB	PostgreSQL
-Migrations	Flask-Migrate
-Validation	Marshmallow
-Logging	python-json-logger
-Metrics	prometheus-client (used in later stages)
-WSGI Server	gunicorn
-Testing	pytest, pytest-flask
-Linting	pylint, flake8
+- Docker & Docker Compose
+- GitHub Actions CI/CD
+- Kubernetes
+- Helm Charts
+- ArgoCD (GitOps)
+- Prometheus
+- Grafana
+- Loki + Promtail
+- Alertmanager
+- External Secrets Operator
+- Hashicorp Vault
 
 ------------------------------------------------------------------------------------------------------------------ 
 
-## Milesstone - 1
+## Milesstone - 1 Create a simple REST API Webserver
 
-Quick Start:
+This milestone covers setting up the Student CRUD REST API locally using Python, virtual environments, PostgreSQL, migrations, and Makefile automation.
 
-Prerequisites:
-1.python to run the application 
-2.postgresql DB
+### Prerequisites:
 
+Ensure the following are installed on your system:
+- Python 3.x (to run the API)
+- pip (Python package manager)
+- PostgreSQL (for the database)
 
-Local Setup Instructions:
+### Local Setup Instructions:
 
-1. Clone the repository
+#### 1.Clone the repository
+```
 git clone https://github.com/<your-username>/sre-bootcamp-students-api.git
 cd sre-bootcamp-students-api
+```
 
-
-2.Create local .env by copying:
-
+#### 2.Create local .env by copying:
+```
 cp .env.example .env
+```
+Update values as needed for your system.
 
-3. Create a virtual environment
+#### 3.Create & Activate a Virtual Environment
+
+##### Linux / Mac
+```
 python3 -m venv venv
-source venv/bin/activate      # Linux/Mac
-venv\Scripts\activate         # Windows	
+source venv/bin/activate
+```
 
-Step 3 — Install Dependencies
+##### Windows
+```
+python -m venv venv
+venv\Scripts\activate
+```
 
-Instead of manually installing dependencies using pip install,
-you can simply run the Make target:
+#### 4.Install Dependencies (via Makefile)
+Instead of installing manually, use:
+```
+make build
+```
 
-make build-local-api
+##### This executes:
+- `python -m pip install --upgrade pip`
+- `pip install --no-cache-dir -r requirements.dev.txt`
 
-Runs:
-python -m pip install --upgrade pip
-pip install --no-cache-dir -r requirements.dev.txt
+the current project has migrations folder to github so if wantt o use thaat  no need to initializa if begeing withou the migrations folder then 
 
-5. Run migrations
+#### 5.Initialize DB Migrations (run once)
+```
+make migrate-init
+```
 
-make migrate
+#### 6.Create a Migration(Generate migration scripts)
+```
+make migrate-create M="create students table"
+```
+Which internally runs:
+```
+flask db migrate -m "$(M)"
+```
 
-Runs:
-flask db init
-flask db migrate
+#### 7.Apply Migrations
+```
+make migrate-upgrade
+```
+Which internally runs:
+```
 flask db upgrade
+```
 
-6. Start the API
-Option A — Flask Dev Server
+#### 8.Start the API
 
+##### Option A — Flask Dev Server
+```
 make run
-
-Runs:
-
+```
+##### Runs:
+```
 python run.py
+```
 
-Option B — Gunicorn (production style)
-
-make run-gunicorn:
-
-Runs:
+##### Option B — Gunicorn (production style)
+```
+make run-gunicorn
+```
+##### Runs:
+```
 gunicorn --bind 0.0.0.0:8000 "app:create_app()"
+```
 
-🧰 Makefile Commands
-Command	Description
-make run	Start Flask API
-make run-gunicorn Start Gunicorn server for API
-make test	Run test suite
-make migrate	Generate migration
-make upgrade	Apply migrations
-make lint	Run flake8 & pylint
+### Health Check
+```
+curl http://localhost:5000/healthcheck
+```
+
+### Makefile Commands
+
+| Command                               | Description                    |
+| ------------------------------------- | ------------------------------ |
+| `make run`                            | Start Flask API                |
+| `make run-gunicorn`                   | Start API using Gunicorn       |
+| `make test`                           | Run test suite                 |
+| `make migrate-create M="message"`     | Generate a new migration script|
+| `make migrate-upgrade`                | Apply database migrations      |
+| `make lint`                           | Run flake8 & pylint            |
+| `make migrate-init`                   | Initialize Alembic migrations (run once) |
+| `make build`                          | Install local dev dependencies |
 
 
+### Project Structure
 
-📁 Project Structure
-.
+```
 ├── .github/
 │   └── workflows/              # CI/CD workflow definitions (GitHub Actions)
 │
@@ -142,7 +188,6 @@ make lint	Run flake8 & pylint
 │   ├── errors.py               # Centralized error handlers
 │   ├── extensions.py           # DB, Marshmallow, JWT, Logger initialization
 │   ├── logging_config.py       # Logging configuration
-│
 │   ├── __init__.py             # Flask application factory
 │
 ├── migrations/                 # Alembic migrations
@@ -158,11 +203,12 @@ make lint	Run flake8 & pylint
 ├── requirements.dev.txt        # Development dependencies (flake8, pytest, black)
 ├── requirements.txt            # Production dependencies
 └── run.py                      # Entry point (Flask dev server)
+```
+This structure supports clean scalability as the project progresses toward Docker, CI/CD, Kubernetes, Helm, ArgoCD, and Observability in later milestones.
 
-This structure supports clean separation of concerns and scales well as we later introduce Docker, CI/CD, K8s, Helm, and Observability.
+### Architecture Overview
 
-Architecture Overview:This project is a modular and scalable REST API Web Server built using Flask, following clean architecture principles.
-The system is organized into clear layers that separate responsibilities, making the codebase maintainable, testable, and extensible.
+#### layered design:
 
           ┌──────────────────────────────┐
           │          Client / UI         │
@@ -202,18 +248,19 @@ The system is organized into clear layers that separate responsibilities, making
                            │
                            ▼
          ┌────────────────────────────────────────┐
-         │            PostgreSQL / SQLite         │
+         │            PostgreSQL                  │
          │         (via SQLAlchemy ORM)           │
          └────────────────────────────────────────┘
 
 
-🗄️ Database Table: students
+### Database Table: `students`
 
 The REST API stores student records in a SQL database using SQLAlchemy ORM.
 
 The table is created using the following model:
 
-📌 Students Table Schema
+### `Students` Table Schema
+
 | Column       | Type        | Constraints                         | Description                        |
 | ------------ | ----------- | ----------------------------------- | ---------------------------------- |
 | `id`         | Integer     | Primary Key, Auto-increment         | Unique identifier for each student |
@@ -224,10 +271,7 @@ The table is created using the following model:
 | `created_at` | DateTime    | Default = timestamp at row creation | When the record was created        |
 | `updated_at` | DateTime    | Auto-updated on modification        | When the record was last updated   |
 
-
-The API supports the following operations:
-
-🚀 Supported API Endpoints (v1)
+### Supported API Endpoints (v1)
 
 | Method | Endpoint                | Description             |
 | ------ | ----------------------- | ----------------------- |
@@ -239,7 +283,7 @@ The API supports the following operations:
 | GET    | `/healthcheck`          | Health check endpoint   |
 
 
-📬 Postman Collection
+### Postman Collection
 
 Import postman_collection.json to test the API.
 
@@ -249,8 +293,7 @@ Example Request:
 Example Response:
 
 
-
-⚙️ Environment Configuration
+### Environment Configuration
 
 All configuration is passed through environment variables, following 12-Factor App standards.
 
@@ -266,27 +309,15 @@ Below is the list of environment variables used by the application:
 | `POSTGRES_PORT`     | Port for PostgreSQL                        | `5432`        |
 | `LOG_LEVEL`         | Application logging level                  | `INFO`        |
 
+### Testing
+```
+make test
+```
+Runs:
+`pytest -v --cov=app --cov-report=term-missing`
 
-
-🧪 Testing
-
-Run tests:
-
-pytest --cov=app
-
-
-Tests include:
-
-Healthcheck
-CRUD endpoints
-Input validation
-DB interactions
-
-
-🧾 Logging
-
-All logs use JSON format:
-
+### Logging
+```
 {
   "timestamp": "2025-01-10T12:45:20Z",
   "level": "INFO",
@@ -294,1710 +325,1173 @@ All logs use JSON format:
   "message": "Student created",
   "log_type": "application"
 }
-
+```
 ------------------------------------------------------------------------
 
-🚀 Milestone 2 – Dockerization & Image Optimization
+## Milestone 2 – Containerise REST API
 
-This milestone focuses on running the API using Docker, creating a multi-stage Dockerfile, injecting environment variables at runtime, optimizing image size, and tagging images using semantic versioning (semver).
+This milestone focuses on Dockerizing the REST API following industry-standard best practices. The implementation includes building a multi-stage Dockerfile, injecting environment variables at runtime, optimizing the image size for production, tagging images using Semantic Versioning (SemVer), and running the API entirely inside Docker.
 
-🐳 Docker Usage Instructions
-Build Docker Image
+### Prerequisites
+
+Before proceeding, ensure the following tools are installed:
+
+#### Docker Engine
+
+##### 1.Install Docker using the official production-grade steps for Ubuntu:
+```
+# Add Docker GPG key and repository (Ubuntu)
+sudo apt update
+sudo apt install -y ca-certificates curl gnupg
+
+sudo install -m 0755 -d /etc/apt/keyrings
+sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+sudo chmod a+r /etc/apt/keyrings/docker.asc
+```
+
+##### 2.Add the Docker repository:
+```
+echo \
+"Types: deb
+URIs: https://download.docker.com/linux/ubuntu
+Suites: $(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}")
+Components: stable
+Signed-By: /etc/apt/keyrings/docker.asc" |
+sudo tee /etc/apt/sources.list.d/docker.sources > /dev/null
+```
+
+##### 3.Install Docker:
+```
+sudo apt update
+sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+```
+
+##### 4.Verify installation:
+```
+docker --version
+docker compose version
+```
+
+##### 5.Add User to Docker Group
+
+##### Allows running Docker without sudo:
+```
+sudo usermod -aG docker $USER
+newgrp docker
+```
+
+### Docker Usage Instructions
+
+#### 1.Build Docker Image
+
 Without Makefile:
+```
 docker build -t my-api:1.0.0 .
-
+```
 With Makefile:
-make docker-build VERSION=1.0.0
+```
+make docker-build
+```
 
-Run the API Container
+#### 2.Run the API Container
+
 Without Makefile:
+```
 docker run -p 5000:5000 \
   -e DB_HOST=localhost \
   -e DB_USER=root \
   -e DB_PASS=password \
   my-api:1.0.0
+```
 
 With Makefile:
-make docker-run VERSION=1.0.0
-
-🧪 Environment Variables
-
-The following environment variables can be injected at runtime:
-
-Variable	Description
-DB_HOST	Database hostname
-DB_USER	DB username
-DB_PASS	DB password
-PORT	Application port
-
-📦 Makefile Targets Added
-docker-build:
-    docker build -t my-api:$(VERSION) .
-
-docker-run:
-    docker run -p 8080:8080 --env-file .env my-api:$(VERSION)
-
-docker-push:
-    docker push my-api:$(VERSION)
-
-🪶 Docker Image Optimization Techniques Used
-
-Multi-stage builds
-
-Lightweight base (alpine or slim)
-
-Removed unnecessary dependencies
-
-Cached layers
-
-Smaller final runtime layer
+```
+make docker-run
+```
 
 ---------------------------------------------------------
-🚀 Milestone 3 – One-Click Local Development Setup
+## Milestone 3 – One-Click Local Development Setup
+This milestone focuses on simplifying local development, enabling any team member to start the entire stack—even without pre-installed tools—using Docker Compose, Makefile automation, and helper scripts. The complete stack (API + Database + Migrations) can now be started with a single command, ensuring the correct startup order without manual steps.
 
-This milestone focuses on making local development extremely simple for any team member—even if they do not already have the required tools installed. Using Docker Compose, Makefile automation, and helper scripts, the entire stack (API + Database + Migrations) can now be started with a single command.
+### Makefile Targets
 
-2. Makefile Targets Added
+#### The Makefile now includes targets to automate:
 
-The Makefile now includes targets to automate:
+| Target                        | Description                                 |
+| ----------------------------- | ------------------------------------------- |
+| `make db-up`                  | Starts the database service                 |
+| `make db-down`                | Runs database DML migrations                |
+| `make db-status`              | Show database container status            |
+| `make docker-build`              | Build the REST API Docker image (SemVer tagging supported) | 
+| `make docker-run` | Run the API container using `.env`  |
+| `make compose-build`  | Build all Docker Compose services  |
+| `make compose-up`  | Start DB → run migrations → start API  |
+| `make compose-down`  | Stop all Docker Compose services  |
 
-Target	Description
-make db-start	Starts the DB service
-make db-migrate	Runs DB DML migrations
-make docker-build	Builds the REST API Docker image
-make api-start	Starts API (DB + migrations + API container)
-make setup-tools (optional)	Installs required tools using bash functions
+### Step-by-Step Local Setup
 
+#### 1.Start the Database
+```
+make db-up
+```
+- Starts the DB container
+- Creates the network if needed
 
-🛠️ Pre-Requisites
-
-Before running the project, ensure the following tools are installed:
-
-1. Docker
-
-Check installation:
-
-docker --version
-
-2. Docker Compose
-
-(Check included in Docker Desktop)
-
-docker compose version
-
-3. Make
-make --version
-
-🚀 One-Click Local Development Setup
-
-The goal is to allow any team member to run the API with a single command.
-
-🧰 Step-by-Step Local Setup
-1️⃣ Start the Database
-make db-start
-
-
-This will:
-
-Start DB container
-
-Create network if needed
-
-2️⃣ Run Database DML Migrations
+#### 2️.Run Database DML Migrations to be done
+```
 make db-migrate
+```
 
+- Check whether DB is reachable
+- Applies all DML migrations
+Alternatively, you can run migrations directly using the backend container:
+```
+docker compose run --rm backend flask db migrate
+docker compose run --rm backend flask db upgrade
+```
 
-This will:
+#### 3️.Build the API Docker Image
+```
+make compose-build
+```
+- Uses Semantic Versioning (SemVer)
 
-Check whether DB is reachable
+#### 4.Start the REST API-Start DB, run migrations, and start API:
+```
+make compose-up
+```
+- Starts the DB if not already running
+- Applies migrations
+- Builds the API Docker image if missing
+- Starts the API container via Docker Compose
+This ensures the stack is fully functional with a single command.
 
-Apply all DML migrations
+#### 5.Stop services
+```
+make compose-down
+```
 
-3️⃣ Build the API Docker Image
-make docker-build VERSION=1.0.0
+### Docker Compose Overview
 
+#### The docker-compose.yml defines:
+- database service
+- api service
+- Shared network
+- Environment variables
+- Service dependencies (depends_on)
 
-Uses semantic versioning.
+This guarantees that the API waits until the database is ready.	
 
-4️⃣ Start the REST API
-make api-start VERSION=1.0.0
-
-
-This command automatically:
-
-Starts the DB (if not already running)
-
-Applies migrations
-
-Builds the API Docker image (optional, if missing)
-
-Starts the API using docker compose up
-
-This ensures the entire stack is started in the correct order without any manual steps.
-
-🐳 Docker Compose Overview
-
-The docker-compose.yml includes:
-
-database service
-
-api service
-
-Shared network
-
-Environment variables
-
-Dependencies (depends_on)
-
-This guarantees that the API waits until DB is available.
-
-📝 Makefile Overview
-
-Example targets included (your actual Makefile may differ):
-
-db-start:
-    docker compose up -d db
-
-db-migrate:
-    docker exec db-container-name python migrate.py
-
-docker-build:
-    docker build -t my-api:$(VERSION) .
-
-api-start:
-    make db-start
-    make db-migrate
-    docker compose up -d api
-
-do the migration -m required by using the image and run the commad directly by migrate:
-	docker compose run --rm backend flask db migrate
-	docker compose run --rm backend flask db upgrade seperated or single 
-	
 -------------------------------------------
 
-🚀 Milestone 4 – Continuous Integration (CI) Pipeline Setup
+## Milestone 4 – Continuous Integration (CI) Pipeline Setup
 
-This milestone introduces a fully automated CI pipeline powered by GitHub Actions and executed on a self-hosted runner.
-The goal is to ensure code quality, automated builds, testing, linting, and Docker image publishing — all triggered only when relevant code changes occur.
+This milestone introduces a fully automated CI pipeline using GitHub Actions, executed on a self-hosted runner. The goal is to ensure code quality, automated builds, testing, linting, and Docker image publishing, triggered only when relevant changes occur.
 
-The CI workflow includes the following stages, executed in the order listed:
+### CI Workflow Stages
 
-1. Build API
+#### The CI pipeline executes the following stages in order:
 
-The API is built using a dedicated Makefile target (e.g., make build).
-This guarantees consistent build steps across local and CI environments.
+- `Build API`
+Uses a Makefile target (e.g., make build) to guarantee consistent builds across local and CI environments.
 
-2. Run Tests
+- `Run Tests`
+Executes unit tests using make test to ensure code correctness before creating Docker images.
 
-Unit and integration tests are executed using a Makefile target (e.g., make test).
-This ensures code correctness before producing a Docker image.
+- `Perform Code Linting`
+Runs make lint (using flake8 and pylint) to enforce code quality and styling standards.
 
-3. Perform Code Linting
+- `Docker Login`
+Authenticates to Docker Hub using GitHub Secrets (DOCKER_USERNAME and DOCKER_PASSWORD) to enable image publishing.
 
-Linting is performed via a Makefile target (e.g., make lint) using tools such as flake8.
-This helps maintain code quality and enforce styling guidelines.
+- `Docker Build & Push`
+Builds and pushes Docker images using either Makefile targets or GitHub’s official Docker actions. Images follow Semantic Versioning (SemVer).
 
-4. Docker Login
+### Makefile Integration
 
-The pipeline authenticates to Docker Hub using GitHub Secrets:
+All core actions—build, test, and lint—are executed via Makefile targets to avoid duplicating logic in CI scripts.
 
-DOCKER_USERNAME
+### Self-Hosted GitHub Runner
 
-DOCKER_PASSWORD
+#### The pipeline runs on a self-hosted runner installed locally.
 
-Authentication is required before pushing Docker images.
-
-5. Docker Build and Push
-
-A Docker image is built and pushed to Docker Hub using either:
-
-Makefile Docker targets, or
-
-GitHub’s official Docker actions
-
-Images may follow semantic versioning (SemVer), depending on your repository structure.
-
-🧱 Makefile Integration
-
-All core pipeline actions—build, test, and lint—are executed using Makefile targets.
-This ensures:
-
-Identical commands locally and in CI
-
-Cleaner workflow YAML
-
-Easier to reproduce and debug builds
-
-Example targets (conceptual):
-
-build:
-    # Build API code
-
-test:
-    # Run automated tests
-
-lint:
-    # Perform code linting
-
-docker-build:
-    # Build Docker image
-
-docker-push:
-    # Push Docker image
-
-
-The CI pipeline simply calls these targets instead of duplicating logic.
-
-🖥️ Self-Hosted GitHub Runner (Local Machine)
-
-This pipeline is executed on a self-hosted runner installed on your local system.
-This runner is responsible for:
-
-Running Makefile commands
-
-Building Docker images
-
-Authenticating and pushing to Docker Hub
-
-Since Docker build and push are part of the pipeline, the self-hosted runner must have:
-
-Docker Engine
-
-Docker CLI
-
-Make
-
-Python (optional, depending on your app)
-
-The workflow uses:
-
-runs-on: self-hosted
-
-
-This ensures all CI tasks run locally instead of using GitHub-hosted runners.
-
-🎯 Trigger Rules
-
-The CI pipeline is designed to run only when relevant changes occur.
-
-✔ Trigger on code changes only
-
-The workflow executes only when files inside the code/ directory are modified:
-
-on:
-  push:
-    paths:
-      - "code/**"
-
-
-This prevents unnecessary pipeline runs from changes to docs, configs, or unrelated directories.
-
-✔ Manual Trigger Enabled
-
-The workflow can also be started manually from the GitHub Actions UI:
-
-Actions → CI Pipeline → Run Workflow
-
-
-Enabled using:
-
+#### Key features:
+- Manual Trigger Enabled:
+Can be run on-demand via GitHub Actions UI using:
 workflow_dispatch:
 
+- Local Runner Setup:
+GitHub Docs – Add self-hosted runners: https://docs.github.com/en/actions/how-tos/manage-runners/self-hosted-runners/add-runners
+------------------------------------------------
 
-This allows developers to run the CI pipeline on demand, even without pushing code.
+## Milestone 5 — Deploy REST API & Dependent Services on Bare Metal
+This milestone focuses on deploying the REST API and supporting services on a bare-metal VM using Vagrant, Bash provisioning, Docker Compose, and Nginx load balancing.
 
+![milestone5-j](https://github.com/user-attachments/assets/69cd861a-a193-47de-bee9-37b6bf89c6ba)
 
-📌 Milestone 5 — Deploy REST API & Dependent Services on Bare Metal
+### Repository Requirements
 
-This milestone focuses on deploying the REST API and all supporting services on a bare-metal environment using Vagrant, Bash provisioning, Docker Compose, and Nginx load balancing.
+```
+├── Vagrantfile
+├── Dockerfile
+├── provision.sh
+├── Makefile
+├── docker-compose.yml
+├── docker-compose.baremetal.yml
+├── nginx/
+│   └── nginx.conf
+├── app/
+├── migrations/
+└── README.md
+```
 
-The end goal is to create a fully functional multi-container environment that exposes the API through a load balancer and verifies that the service is operational.
+### Prerequisites (Host)
 
-🚀 Deployment Overview
+- Vagrant
+- VirtualBox
 
-The deployment uses:
+### Step-by-Step Local Setup
 
-Vagrant → to provision a bare-metal VM
+#### 1.Start the VM
+```
+vagrant up
+vagrant ssh
+```
+What This Does
 
-Bash script → to configure the VM and install dependencies
+- Provisions Ubuntu VM
+- Installs Docker, Compose, Make
 
-Docker Compose → to orchestrate all containers
+#### 2.Deploy Full Stack 
+```
+cd /vagrant
+make deploy-baremetal
+```
 
-Makefile → to simplify deployment commands
+Starts:
 
-Nginx → to load balance traffic between API replicas
+2 API containers
 
-🔧 Infrastructure Provisioning
-✔ Vagrant Setup
+1 PostgreSQL container
 
-A Vagrantfile is used to:
+1 Nginx load balancer
 
-Spin up a VM
-
-Allocate CPU, memory, and networking configurations
-
-Set up a synced folder (if required)
-
-Call a provisioning bash script
-
-Example concepts included:
-
-config.vm.box = "ubuntu/focal64"
-config.vm.provision "shell", path: "bootstrap.sh"
-
-✔ Bash Script Provisioning
-
-The VM is configured using a bootstrap.sh or similar script that includes:
-
-Modular bash functions for installation tasks
-
-Installation of required packages such as:
-
-Docker
-
-Docker Compose
-
-Git
-
-curl / wget
-
-Python (if needed)
-
-Adding the vagrant user to the Docker group
-
-System updates and service setup
-
-This ensures idempotent, repeatable VM provisioning.
-
-🐳 Application Deployment Using Docker Compose
-
-The deployment uses docker-compose.yaml to orchestrate:
-
-🔹 2 API containers
-
-Running the REST API application, scaled using:
-
-deploy:
-  replicas: 2
+Runs DB migrations automatically
 
 
-or using explicit services:
-
-api-1
-
-api-2
-
-🔹 1 Database container
-
-A single DB instance such as PostgreSQL or MySQL.
-
-🔹 1 Nginx container
-
-Configured as a load balancer in front of the two API replicas.
-
-The final setup runs 4 containers:
-
-Service	Purpose
-API-1	REST API instance
-API-2	REST API instance
-DB	Database
-Nginx	Load balancer
-⚙️ Makefile Integration
-
-A Makefile is included in the repository to simplify deployment tasks such as:
-
-setup:
-	docker-compose pull
-
-up:
-	docker-compose up -d
-
-down:
-	docker-compose down
-
-logs:
-	docker-compose logs -f
 
 
-This ensures a consistent way to run, stop, and monitor the environment across local and VM environments.
+#### 3.Access API (via Nginx)
+```
+http://localhost:8080
+```
 
-🌐 Nginx Load Balancing
+#### 4.Health check:
+```
+curl http://localhost:8080/healthcheck
+```
+Status: 200 OK
+Traffic load-balanced across both APIs
 
-The Nginx configuration must be committed to the GitHub repository, including:
+### Functional Validation
 
-nginx.conf
+#### After deployment:
 
-Dockerfile (if customizing)
+- API must be accessible at:
+```
+http://<vm-ip>:8080
+```
+- Nginx distributes traffic across both API containers
+- All API endpoints return HTTP 200 OK when tested with Postman
 
-Compose references
+### Stop and remove bare-metal deployment
 
-Nginx performs round-robin load balancing across the two API containers.
+```
+make destroy-baremetal
+```
 
-Example upstream block (conceptual):
+### Nginx Load Balancing:
 
+- Configured using nginx/nginx.conf
+
+- Performs round-robin load balancing across API replicas
+
+- Users access API via host/VM port 8080
+
+#### Example upstream configuration:
+```
 upstream api_backend {
     server api-1:5000;
     server api-2:5000;
 }
+```
 
-External Access
+### Deployment Overview
 
-Users access the API through port 8080 on the host / VM.
+#### The deployment stack includes:
 
-Nginx forwards requests internally to API containers:
-
-api-1:5000
-
-api-2:5000
-
-🔍 Functional Validation
-
-After deployment:
-
-✔ API must be accessible via:
-http://<vm-ip>:8080
-
-✔ Nginx should distribute traffic across both API containers.
-✔ All API endpoints must return HTTP 200 OK when tested using Postman.
-
-This confirms that:
-
-The API is running
-
-Load balancing works correctly
-
-Containers are healthy
-
-Database connectivity is functional
-
-📁 Repository Requirements
-
-The following files must be included in the repository:
-
-Vagrantfile
-
-Provisioning bash script (e.g., bootstrap.sh)
-
-docker-compose.yaml
-
-Makefile
-
-Nginx config (nginx.conf)
-
-Any additional environment or service configs
-
-
+- Vagrant – provisions the bare-metal VM
+- Bash Script – automates OS setup, installs Docker, Docker Compose, Git, Python, and adds users to the Docker group
+- Docker Compose – orchestrates containers (API, DB, Nginx)
+- Makefile – simplifies deployment commands
+- Nginx – load balances traffic across multiple API replicas
 
 -------------------
-📌 Milestone 6 — Setup Kubernetes Cluster
 
-This milestone focuses on creating a multi-node Kubernetes cluster using Minikube and preparing it for future production-like deployments.
-The cluster will be used to run the application, database, and dependent services in isolated node groups, similar to a real production topology.
+## Milestone 6 — Setup Kubernetes Cluster
 
-1️⃣ Spin Up a Multi-Node Minikube Cluster
+This milestone focuses on setting up a production-like Kubernetes cluster using Minikube with three worker nodes, each labeled to represent different workload responsibilities.
+This prepares the cluster for deploying the application, database, and dependent services in later milestones.
 
-A four-node cluster must be created:
+### Prerequisites:
 
-1 control-plane node
+#### Ensure the following tools are installed on your system:
 
-3 worker nodes
+- minikube
+https://minikube.sigs.k8s.io/docs/start/?arch=%2Flinux%2Fx86-64%2Fstable%2Fbinary+download 
+- kubectl
+https://kubernetes.io/docs/tasks/tools/
+#### Verify installation:
 
-Example:
+```
+minikube version
+kubectl version --client
+```
+### Step-by-Step Local Setup
 
+#### 1.Create a Multi-Node Minikube Cluster
+```
 minikube start --nodes 4 -p prod-cluster
+```
+##### verify nodes:
+```
+kubectl get nodes
+```
 
-2️⃣ Label the Worker Nodes Appropriately
+#### 2️.Label the Worker Nodes Appropriately
 
-Add labels to instruct the scheduler where to run future workloads:
+##### Add labels to instruct the scheduler where to run future workloads:
 
 Worker Node	Label
 Node A	type=application
 Node B	type=database
 Node C	type=dependent_services
 
-Example:
-
+##### Example:
+```
 kubectl label node prod-cluster-m02 type=application
 kubectl label node prod-cluster-m03 type=database
 kubectl label node prod-cluster-m04 type=dependent_services
+```
 
+##### verify lables:
+```
+kubectl get nodes --show-labels
+```
 
 These labels will later be used in Deployment manifests:
 
 nodeSelector:
   type: application
 
-3️⃣ Enable CSI HostPath Storage Driver
 
-To support multi-node storage provisioning, enable Minikube’s CSI hostpath addon:
+#### 3️.Enable CSI HostPath Storage Driver
 
+To support multi-node persistent storage, enable Minikube’s CSI HostPath driver:
+```
 minikube addons enable csi-hostpath-driver -p prod-cluster
+```
+This enables CSI-backed dynamic volume provisioning, which is required for stateful workloads in multi-node clusters.
 
+#### 4️.Configure the Default StorageClass
 
-This provides a CSI-driven dynamic storage backend.
+Minikube’s default standard StorageClass is not suitable for multi-node workloads. To ensure reliable storage provisioning for stateful components, the CSI HostPath StorageClass is configured as the default for this cluster.
 
-4️⃣ Update the Default Storage Class
+##### 4.1 Set CSI HostPath as Default
 
-Minikube creates a default storage class that does not support multi-node scheduling.
-We must:
-
-✔ Mark the CSI HostPath StorageClass as default
-✔ Ensure future PVCs bind to volumes that stay on the correctly labeled node
-
-Steps:
-
-Edit the CSI storage class:
-
+###### Edit the CSI StorageClass:
+```
 kubectl edit storageclass csi-hostpath-sc
+```
 
-
-Ensure it includes:
-
+###### Ensure it includes:
+```
 metadata:
   annotations:
     storageclass.kubernetes.io/is-default-class: "true"
+```
+
+#### 4.2 (Optional but Recommended) Remove Default Annotation from Old StorageClass
+
+To avoid conflicts between multiple default StorageClasses, remove the default annotation from Minikube’s standard StorageClass:
+```
+kubectl patch storageclass standard -p \
+'{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"false"}}}'
+```
+What This Ensures
+With CSI HostPath configured as the default, all future PVCs automatically use it. PersistentVolumes are created on the same node where the Pod is scheduled, making this setup ideal for databases and other stateful components.
+
+### Why CSI HostPath Matters
+
+The default Minikube storage works reliably only in single-node clusters. In a multi-node setup, CSI HostPath ensures that each worker node uses its own CSI driver and that volumes are provisioned per node. This allows storage to fully respect Kubernetes pod scheduling decisions.
+
+This design aligns naturally with node-based workload placement, ensuring that database pods, application pods, and dependent services use storage from the same nodes on which they run, preventing cross-node storage conflicts.
+
+### volumeBindingMode: WaitForFirstConsumer
+
+The CSI HostPath StorageClass uses volumeBindingMode: WaitForFirstConsumer. This means Kubernetes does not provision a PersistentVolume immediately. Instead, it waits until the Pod is scheduled and then creates the volume on the same node as the Pod.
+
+This behavior prevents common issues such as Pods stuck in a Pending state, volumes being created on incorrect nodes, and node affinity or scheduling conflicts.
+
+------------------------------------
+
+## Milestone 7 – Deploy REST API & Dependent Services in Kubernetes
+
+In this milestone, we migrate from bare-metal Vagrant deployments to Kubernetes-based deployments using Minikube. The Student REST API, PostgreSQL database, and dependent services such as HashiCorp Vault and External Secrets Operator (ESO) are deployed on a 3-node Minikube cluster created in the previous milestone.
+
+![milestone7-j](https://github.com/user-attachments/assets/d2782692-730f-476d-a47a-bf61b49018d7)
 
 
-(Optional but recommended) Remove default annotation from the old storage class:
+### Repository Structure (Kubernetes Manifests)
 
-kubectl patch storageclass standard -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"false"}}}'
+#### All Kubernetes manifests are committed to the same repository under the following structure:
+```
+k8s-manifests/
+├── application.yaml
+├── database.yaml
+├── eso/
+│   ├── store-secret.yaml
+├── vault/
+│   ├── vault.yaml
+```
 
+### Namespaces
+
+#### Create the required namespaces before deployment:
+```
+kubectl create namespace student-api
+kubectl create namespace vault
+kubectl create namespace external-secrets
+```
+
+### Optional: Enable TLS for Vault
+-------------
+#### Generate a CA certificate:
+```
+openssl genrsa -out ca.key 4096
+openssl req -x509 -new -nodes -key ca.key -sha256 -days 3650 \
+  -out ca.crt -subj "/C=xxx/ST=xxxxx/L=xxxxx/O=VaultCA/CN=Vault Root CA"
+```
+
+#### Generate Vault Cert
+```
+openssl genrsa -out tls.key 2048
+openssl req -new -key tls.key -out vault.csr -config vault-cert.cnf
+openssl x509 -req -in vault.csr -CA ca.crt -CAkey ca.key -CAcreateserial \
+  -out tls.crt -days 3650 -sha256 -extfile vault-cert.cnf -extensions req_ext
+```
+
+#### files generated:
+`
+certs$ ls
+ca.crt  ca.key  ca.srl  tls.crt  tls.key  vault-cert.cnf  vault.csr
+`
+
+#### Create the TLS secret:
+```
+kubectl -n vault create secret generic vault-tls \
+  --from-file=tls.crt=tls.crt \
+  --from-file=tls.key=tls.key \
+  --from-file=ca.crt=ca.crt
+```
+--------------------------
+
+### Deployment Steps:
+
+#### 1.Deploy Vault (Node C – dependent_services)
+```
+kubectl apply -f k8s-manifests/vault/
+```
+Vault pods are scheduled on the dependent_services node using nodeSelector.
+
+##### Initialize & Configure Vault:
+```
+kubectl exec -it vault-0 -n vault -- vault operator init -key-shares=1 -key-threshold=1
+kubectl exec -it vault-0 -n vault -- vault operator unseal
+```
+Unseal the remaining Vault pods (vault-1, vault-2).
+
+##### Verify raft cluster:
+```
+vault operator raft list-peers
+```
+
+##### Enable Kubernetes Authentication in Vault
+
+##### Enable Kubernetes authentication
+```
+vault auth enable kubernetes
+```
+
+##### Configure Kubernetes authentication:
+```
+vault write auth/kubernetes/config \
+  kubernetes_host="https://$KUBERNETES_SERVICE_HOST:$KUBERNETES_SERVICE_PORT" \
+  token_reviewer_jwt="$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)" \
+  kubernetes_ca_cert=@/var/run/secrets/kubernetes.io/serviceaccount/ca.crt \
+  issuer="https://kubernetes.default.svc.cluster.local"
+```
+
+##### Enable KV v2 secrets engine:
+```
+vault secrets enable -path=secret kv-v2
+```
+
+##### Create policy for ESO:
+```
+vault policy write eso-policy - << EOF
+path "secret/data/*" {
+  capabilities = ["read"]
+}
+path "secret/metadata/*" {
+  capabilities = ["list"]
+}
+EOF
+```
+##### verify:
+```
+vault policy list
+```
+
+##### Create Vault role for ESO:
+```
+vault write auth/kubernetes/role/external-secrets-operator \
+  bound_service_account_names=vault-auth \
+  bound_service_account_namespaces=external-secrets \
+  policies=eso-policy \
+  ttl=1h
+```
+
+##### Store database credentials:
+```
+vault kv put secret/database POSTGRES_USER="db_user" POSTGRES_PASSWORD="db_password" POSTGRES_DB="name_db"
+```
+
+#### 2.Deploy External Secrets Operator (ESO)
+
+ESO is deployed using Helm and rendered into Kubernetes manifests
+
+helm template external-secrets \
+  external-secrets/external-secrets \
+  -n external-secrets \
+  --set installCRDs=true \
+  --set nodeSelector.type=dependent_services \
+  --set webhook.nodeSelector.type=dependent_services \
+  --set certController.nodeSelector.type=dependent_services 
+
+##### Apply the generated manifest or use the rendered file:
+```
+kubectl apply -f k8s-manifests/eso/external-secrets.yaml
+```
+
+##### Create CA secret for ESO (if using HTTPS):
+```
+kubectl create secret generic vault-ca \
+  --from-file=ca.crt=ca.crt \
+  -n external-secrets
+```
+
+##### Apply SecretStore and ExternalSecret:
+```
+kubectl apply -f k8s-manifests/eso/store-secret.yaml
+```
+If HTTPS is not used, remove CA mounts and use HTTP in the Vault URL.
+
+#### 3.Deploy Database (Node B)
+```
+kubectl apply -f k8s-manifests/database.yaml
+```
+The database pod is scheduled on Node B using a node selector.
+
+#### 4.Deploy Application (Node A)
+```
+kubectl apply -f k8s-manifests/application.yaml
+```
+
+Database Migrations (Init Container)
+Database migrations are executed using an init container before the main application starts:
+```
+- name: migrate-container
+  image: backend-backend:v1.0.0
+  envFrom:
+    - configMapRef:
+        name: backend-config
+    - secretRef:
+        name: db-secrets
+  command: ["sh", "-c"]
+  args: ["echo 'Running migrations...' && flask db upgrade && echo 'Migrations complete.'"]
+```
+
+This ensures migrations run once and before application startup.
+
+### Verification
+
+#### Verify pods and services:
+```
+kubectl get pods -A
+kubectl get svc -A
+```
+
+### Test health endpoint:
+```
+curl -i http://<NODE_IP>:32000/health
+```
+
+Expected response:
+
+HTTP/1.1 200 OK
+
+### API Testing (Postman)
+
+After successful deployment, use the Postman collection included in the repository to test:
+
+Create Student
+
+Get Student
+
+Update Student
+
+Delete Student
+
+All endpoints should return 200 OK.
+
+---------------------------
+## Milestone 8 – Deploy REST API & Dependent Services Using Helm Charts
+
+In this milestone, we transition from raw Kubernetes manifests to Helm-based deployments for the REST API, PostgreSQL database, Vault, and External Secrets Operator (ESO).
+Helm enables packaging, versioning, configuration overrides, and reusable deployments, making the setup closer to production standards.
+
+### Helm Repository Structure
+
+```
+helm-charts/
+├── backend/
+├── infrastructure/
+│   ├── vault/
+│   └── external-secrets/
+└── override-values/
+    ├── vault-fin-1.yaml
+    └── eso-fin-1.yaml
+
+```
+
+### Deployment Workflow Using Helm
+
+#### 1.Deploy Vault (Infrastructure)
+
+Vault is deployed first since it is required by ESO.
+
+TLS setup (CA, server certs, Kubernetes secret) is same as Milestone 7
+
+If HTTPS is not required, disable TLS mounts and use HTTP in values
+
+##### Deploy Vault using Helm:
+```
+helm install vault helm-charts/infrastructure/vault \
+  -n vault \
+  -f override-values/vault-fin-1.yaml
+```
+
+##### Important Notes
+
+- serverTelemetry.prometheusRules.enabled: true
+- Disable this if the observability stack (Prometheus CRDs) is not installed.
+
+Vault pods are scheduled using node selectors (dependent services node).
+
+##### Initialize & Unseal Vault
+
+Same as the previous milestone:
+```
+vault operator init
+vault operator unseal
+vault operator raft list-peers
+```
+
+##### Configure Vault for Kubernetes & ESO
+
+Inside the Vault pod:
+- Enable Kubernetes auth
+- Enable KV v2 secrets engine
+- Create ESO read-only policy
+- Bind policy to ESO Kubernetes role
+- Store database credentials
+(Exact commands remain unchanged from Milestone 7.)
+
+#### 2.Deploy External Secrets Operator (ESO)
+
+If Vault uses HTTPS:
+- Create CA secret in external-secrets namespace (same as before)
+
+##### Deploy ESO using Helm:
+```
+helm install external-secrets helm-charts/infrastructure/external-secrets \
+  -n external-secrets \
+  -f override-values/eso-fin-1.yaml
+```
+
+##### Apply ClusterSecretStore:
+```
+kubectl apply -f external-secrets/clusterstore.yaml
+```
+
+Once configured, ESO automatically syncs secrets from Vault into the target namespaces.
+
+#### 3.Deploy Backend Application (Student API)
+
+Deploy the backend Helm chart:
+```
+helm install student-api helm-charts/backend -n student-api
+```
+
+#### Notes
+
+- The backend chart includes ExternalSecret templates
+- Disable the following if observability is not installed:
+```
+serviceMonitor:
+  enabled: false
+
+alerts:
+  enabled: false
+```
+
+- Database migrations run using an init container before the main app starts
+
+### Access the REST API
+
+If using NodePort:
+```
+kubectl get svc -n student-api
+```
+
+Example URL:
+```
+http://<NODE-IP>:32000
+```
+
+### API Testing
+
+Test using Postman or curl:
+```
+GET  /students  → 200 OK
+POST /students  → 200 OK
+```
+
+All CRUD endpoints must return 200 OK.
+
+--------------------------------------------------------
+
+## Milestone 9 — Setup One-Click Deployments Using ArgoCD
+
+This milestone introduces GitOps-based automated deployments using ArgoCD.
+Instead of manually running kubectl apply or helm install, ArgoCD continuously watches the Git repository and automatically synchronizes Kubernetes state whenever changes are pushed.
+![milestone9-j](https://github.com/user-attachments/assets/c4ff0787-d450-4efe-8777-d5185e99819b)
+
+### Repository Layout for GitOps
+
+Your repo now includes:
+```
+argomanifest/
+├── app.yaml
+└── external-secrets.yaml
+
+helm-charts/
+├── backend/
+├── infrastructure/
+│   ├── vault/
+│   ├── external-secrets/
+│   └── argo-cd/
+│
+└── override-values/
+    ├── vault-fin-1.yaml
+    ├── eso-fin-1.yaml
+    └── values-argocd.yaml
+```
+
+### ArgoCD Installation & Setup
+
+ArgoCD is installed using a locally managed Helm chart.
+
+#### Install ArgoCD
+```
+helm install argocd helm-charts/infrastructure/argo-cd \
+  -n argocd \
+  -f override-values/values-argocd.yaml
+```
+
+#### Scheduling & Observability Notes
+
+- ArgoCD is scheduled on the dependent_services node
+- Disable the following if the logging/monitoring stack is not installed:
+```
+controller:
+  metrics:
+    rules:
+      enabled: false
+```
+
+### GitOps Secrets via External Secrets
+
+The argomanifest/external-secrets.yaml file configures External Secrets for ArgoCD.
+
+- Syncs credentials for private Git repositories
+- Uses an existing ClusterSecretStore (already applied in previous milestones)
+- Secrets are automatically injected into the ArgoCD namespace
+
+#### Apply it once:
+```
+kubectl apply -f argomanifest/external-secrets.yaml
+```
+
+### One-Click Application Deployment via ArgoCD
+
+#### Deploy applications by applying the ArgoCD Application manifest:
+```
+kubectl apply -f argomanifest/app.yaml
+```
+
+This enables:
+- Automatic Helm chart deployment
+- Continuous sync with Git
+- Self-healing and drift correction
+
+No manual Helm or kubectl commands are required after this.
+
+### CI Workflow – Automated Image Updates
+
+The GitHub Actions CI pipeline now includes an additional GitOps step.
+
+What Happens After CI Success
+
+- Build, test, lint, and push Docker image
+
+- Pull the Helm chart from the repository
+
+- Update the image tag in values.yaml
+
+- Commit and push the change to main
+
+### Result
+
+ArgoCD automatically detects the update and deploys the new version — true one-click deployment.
+
+### Access ArgoCD UI (Optional)
+
+#### Port-forward ArgoCD Server
+```
+kubectl port-forward svc/argocd-server -n argocd 8080:80
+```
+
+### Access UI:
+```
+http://localhost:8080
+```
+
+### Retrieve Initial Admin Password
+```
+kubectl get secret argocd-initial-admin-secret \
+  -n argocd \
+  -o jsonpath="{.data.password}" | base64 -d
+```
+----------------------------------
+
+## Milestone 10 — Setup an Observability Stack (Prometheus, Loki, Grafana, Promtail) 
+This milestone focuses on setting up a complete observability stack in Kubernetes using Prometheus, Loki, and Grafana, deployed on the dependent_services node under the observability namespace.
+
+The setup enables:
+
+- Centralized metrics collection
+- Centralized log aggregation
+- Database monitoring
+- Internal endpoint monitoring
+- Unified visualization via Grafana
+
+### Components Overview
+
+#### Prometheus (kube-prometheus-stack)
+
+##### Scrapes:
+- Node metrics
+- kube-state-metrics
+- DB exporter metrics
+- Blackbox exporter metrics
+
+##### Includes:
+- Alertmanager
+- Custom infra alerts (CPU & storage)
+
+Deployed in observability namespace
+
+#### Loki
+- Central log storage
+- Uses Loki Gateway
+- Integrated with Grafana for log querying
+
+#### Promtail
+- Collects only application logs
+- Configured via quick2.yaml
+- Sends logs exclusively to Loki Gateway
+
+#### PostgreSQL Exporter
+- Monitors DB metrics for backend API(Running in the student-api ns)
+- Uses External Secrets to fetch DB credentials securely
+
+#### Blackbox Exporter
+- Monitors internal HTTP/HTTPS endpoints
+- Used for service availability and health checks
+
+#### Grafana
+- Deployed with Helm
+- Configured datasources(Sidecar):
+  - Prometheus → Metrics
+  - Loki → Logs
+- Secrets for admin credentials managed via Helm templates
+- Dashboards & alerts enabled
+
+### Secrets & External Secrets
+The following components manage secrets internally via Helm templates or External Secrets:
+| Component             | Secret Handling                         |
+| --------------------- | --------------------------------------- |
+| Grafana               | External secrets                        |
+| Alertmanager(API URL) | External Secrets                        |
+| PostgreSQL Exporter   | External Secrets                        |
+| Backend API           | ServiceMonitor & alerts via Helm values |
+
+### Important Note (Alerts & Monitoring)
+
+If alerts or ServiceMonitors were disabled in previous milestones (ArgoCD, Vault, Backend API),
+re-enable them now after setting up the logging and monitoring stack.
 
 This ensures:
 
-All PVCs use CSI HostPath
+Metrics are scraped correctly
+Alerts are fired as expected
+Dashboards show complete data
 
-PVs are provisioned on the same node where the pod is scheduled
 
-Ideal for future DB/stateful components
 
-🧪 Why CSI HostPath Matters
-
-Normal Minikube storage works only for single-node clusters.
-With CSI HostPath:
-
-Each worker node has its own CSI driver mount
-
-Volumes are provisioned per node
-
-This perfectly pairs with your node labels:
-
-For example:
-
-Database Pods → Node B → Volumes also on Node B
-
-Application Pods → Node A → Volumes on Node A
-
-This prevents cross-node storage issues.
-------------------------------------
-Milestone 7 – Deploy REST API & Dependent Services in Kubernetes
-✅ Objective
-
-In this milestone, we migrate from bare-metal Vagrant deployments to Kubernetes-based deployments.
-Your REST API, database, and supporting components are now deployed on the 3-node Minikube cluster created in the previous milestone.
-
-This milestone teaches:
-
-Creating and modifying Kubernetes manifests
-
-Using ConfigMaps, Secrets, and External Secrets Operator
-
-Node labeling & scheduling
-
-Understanding Kubernetes service types
-
-Integrating HashiCorp Vault with ESO
-
-
-🚀 Deployment Architecture
-Node	Label	Usage
-Node A	type=application	REST API deployment
-Node B	type=database	PostgreSQL DB
-Node C	type=dependent_services	Vault, ESO, Observability stack
-
-You previously configured node labels using:
-
-kubectl label node <node-name> type=application
-kubectl label node <node-name> type=database
-kubectl label node <node-name> type=dependent_services
-
-
-All YAML manifests ensure workloads are scheduled correctly using:
-
-nodeSelector:
-  type: application   # or database, dependent_services
-
-🔐 Secrets Management with ESO + Vault
-1. Vault runs inside Kubernetes (Node C)
-
-Vault stores:
-
-DB username
-
-DB password
-
-API secrets
-
-2. External Secrets Operator (ESO) pulls secrets from Vault
-
-We declare a SecretStore pointing to Vault:
-
-apiVersion: external-secrets.io/v1beta1
-kind: SecretStore
-metadata:
-  name: vault-backend
-  namespace: student-api
-spec:
-  provider:
-    vault:
-      server: "http://vault.vault:8200"
-      path: "student-api/"
-      version: "v2"
-      auth:
-        token:
-          name: vault-token
-          key: token
-
-3. Application and DB use ExternalSecret
-apiVersion: external-secrets.io/v1beta1
-kind: ExternalSecret
-metadata:
-  name: db-credentials
-  namespace: student-api
-spec:
-  secretStoreRef:
-    name: vault-backend
-    kind: SecretStore
-  target:
-    name: db-secret
-  data:
-    - secretKey: username
-      remoteRef:
-        key: db-user
-    - secretKey: password
-      remoteRef:
-        key: db-pass
-
-
-This auto-creates:
-
-db-secret
-
-
-Used by application and DB.
-
-🗃️ Database Deployment with Init Container (DML Migrations)
-
-DB migrations must run before application pod starts.
-
-Your application.yml includes:
-
-initContainers:
-  - name: run-migrations
-    image: my-api:latest
-    command: ["sh", "-c", "python manage.py run_migrations"]
-    envFrom:
-      - secretRef:
-          name: db-secret
-
-
-The migration init container ensures DB is ready before the main app container starts.
-
-📦 Storage Class (CSI HostPath)
-
-You enabled and modified:
-
-minikube addons enable csi-hostpath-driver
-
-
-Then edited default storage class:
-
-volumeBindingMode: WaitForFirstConsumer
-
-
-This ensures PV is created on the correct node where the pod is scheduled, crucial for multi-node Minikube.
-
-📡 Exposing REST API
-
-The REST API is exposed via Kubernetes Service:
-
-apiVersion: v1
-kind: Service
-metadata:
-  name: student-api-service
-spec:
-  type: NodePort
-  selector:
-    app: student-api
-  ports:
-    - port: 5000
-      targetPort: 5000
-      nodePort: 32000
-
-
-You can access API at:
-
-http://<minikube-ip>:32000
-
-🧪 Validate API
-
-Using Postman:
-
-GET /students → 200 OK
-
-POST /students → 200 OK
-
-PUT /students/:id → 200 OK
-
-DELETE /students/:id → 200 OK
-
-Ensure databases are functioning and init-migrations ran successfully.
-
-📜 Steps to Deploy Everything
-1. Start 3-node Minikube
-
-(Already completed)
-
-2. Apply namespaces
-kubectl apply -f k8s/namespaces/
-
-3. Deploy Vault
-kubectl apply -f k8s/vault/
-
-4. Deploy ESO + SecretStore
-kubectl apply -f k8s/eso/
-
-5. Deploy Database (Node B)
-kubectl apply -f k8s/database/database.yml
-
-6. Deploy Application (Node A)
-kubectl apply -f k8s/application/application.yml
-
-7. Verify Services
-kubectl get pods -A
-kubectl get svc -A
-
-8. Test API
-http://<minikube-ip>:32000/health
-
-
-
-
----------------------------
-Milestone 8 – Deploy REST API & Dependent Services Using Helm Charts
-🎯 Objective
-
-In this milestone, we transition from raw Kubernetes manifests to Helm-based deployments for the REST API, database, Vault, and other dependent services.
-Helm allows us to package, version, parameterize, and reuse deployments in a clean and production-friendly manner.
-
-This milestone teaches:
-
-Helm chart structure (templates, values, helpers)
-
-Best practices for chart packaging
-
-Using subcharts and dependency management
-
-Deploying all services using Helm instead of raw YAML
-
-
-
-
-
-Helm Best Practices Followed
-✔ Templates split into reusable helper files
-
-_helpers.tpl contains:
-
-labels
-
-annotations
-
-naming conventions (e.g., {{ include "student-api.fullname" . }})
-
-✔ No hardcoded values
-
-Everything configurable is in values.yaml:
-
-image
-
-resources
-
-nodeSelector
-
-Vault secret paths
-
-DB connection URLs
-
-Service type (NodePort / ClusterIP)
-
-✔ Node scheduling handled through values
-
-Example in values.yaml:
-
-nodeSelector:
-  type: application
-
-
-Overridden for other charts like:
-
-nodeSelector:
-  type: database
-
-✔ ESO + Vault integration parameterized
-
-ExternalSecret template uses values like:
-
-vault:
-  path: "student-api/"
-  secretKeys:
-    username: db-user
-    password: db-pass
-
-✔ DB migrations handled via Helm hooks or initContainers
-
-Your API Helm chart includes:
-
-initContainers:
-  - name: run-migrations
-    image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
-    command: ["sh", "-c", "python manage.py run_migrations"]
-
-🚀 Deployment Workflow Using Helm
-1. Add dependency charts (optional)
-
-If using community charts:
-
-helm repo add hashicorp https://helm.releases.hashicorp.com
-helm repo add bitnami https://charts.bitnami.com/bitnami
-helm repo add external-secrets https://charts.external-secrets.io
-
-
-For local copies (recommended), they are already inside helm/.
-
-📦 Install Each Component
-1. Create namespaces via Helm
-
-Student API chart includes namespace.yaml inside templates, so installation handles it automatically.
-
-2. Deploy Vault (Node C)
-helm install vault helm/vault -n vault
-
-3. Deploy External Secrets Operator
-helm install eso helm/eso -n external-secrets
-
-4. Deploy Database (Node B)
-
-If using your custom chart:
-
-helm install student-db helm/database -n student-api
-
-
-If using community chart inside repo:
-
-helm install student-db helm/database -n student-api
-
-
-Both work because chart is bundled.
-
-5. Deploy REST API (Node A)
-helm install student-api helm/student-api -n student-api
-
-
-Values can be overridden:
-
-helm install student-api helm/student-api \
-  --namespace student-api \
-  -f helm/student-api/values-prod.yaml
-
-📡 Access the REST API
-
-If using NodePort:
-
-kubectl get svc -n student-api
-
-
-Example URL:
-
-http://<minikube-ip>:32000
-
-
-You can test using Postman:
-
-GET /students → 200
-
-POST /students → 200
-
-🔐 Secret Flow Recap (Helm Version)
-
-Vault stores DB credentials
-
-ESO chart deploys ExternalSecret + SecretStore
-
-Helm renders ExternalSecret YAML for API and DB
-
-ESO converts Vault secrets → K8s secrets
-
-Pods mount secrets via environment variables
-
-Everything is controlled via values:
-
-vault:
-  secretStoreName: vault-backend
-  secretPath: "student-api/"
-
-🔄 Updating Deployments (Helm Upgrade)
-helm upgrade student-api helm/student-api -n student-api
-
-
---------------------------------------------------------
-Milestone 9 — Setup One-Click Deployments Using ArgoCD
-🎯 Objective
-
-This milestone introduces GitOps-based automated deployments using ArgoCD.
-Instead of running kubectl apply or Helm commands manually, ArgoCD continuously monitors your GitHub repository and deploys changes automatically.
-
-This milestone teaches:
-
-GitOps principles
-
-ArgoCD installation & configuration
-
-Declarative ArgoCD Applications
-
-Auto-syncing Helm charts
-
-CI → Git push → ArgoCD auto-deploy pipeline
-
-Updating Helm image tags automatically through GitHub Actions
-
-🧱 ArgoCD Overview
-
-ArgoCD is a GitOps controller that:
-
-Watches your Git repository
-
-Syncs Kubernetes manifests or Helm charts to the cluster
-
-Detects drift and corrects it
-
-Allows continuous deployment without manual intervention
-
-ArgoCD becomes the single source of deployment truth for your Kubernetes cluster.
-
-
-
-📁 Repository Layout for GitOps
-
-Your repo now includes:
-
-helm/
-  student-api/
-  database/
-  vault/
-  eso/
-
-argocd/
-  apps/
-    student-api.yaml
-    database.yaml
-    vault.yaml
-  secrets/
-    repo-credentials.yaml
-
-
-✔ Helm charts remain unchanged.
-✔ ArgoCD YAML definitions are fully declarative.
-✔ No manual creation of ArgoCD resources.
-
-🚀 ArgoCD Installation & Setup
-1. Create the Namespace
-kubectl create namespace argocd
-
-2. Install ArgoCD Components
-kubectl apply -n argocd \
-  -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
-
-3. Schedule ArgoCD on the dependent_services Node
-
-Label your node:
-
-kubectl label node <node-name> type=dependent_services
-
-
-Patch ArgoCD deployments (or set via Helm charts):
-
-spec:
-  template:
-    spec:
-      nodeSelector:
-        type: dependent_services
-
-
-Components deployed:
-
-argocd-server
-
-argocd-repo-server
-
-argocd-application-controller
-
-argocd-dex-server
-
-redis
-
-All under argocd namespace.
-
-📝 Declarative ArgoCD Manifests
-
-No UI clicks.
-Everything is written as YAML in the repo.
-
-Example: argocd/apps/student-api.yaml
-
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: student-api
-  namespace: argocd
-spec:
-  destination:
-    namespace: student-api
-    server: https://kubernetes.default.svc
-  source:
-    repoURL: https://github.com/<yourname>/<repo>.git
-    path: helm/student-api
-    targetRevision: main
-    helm:
-      valueFiles:
-        - values.yaml
-  project: default
-  syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
-
-
-✔ Pulls Helm charts directly
-✔ Uses repo as source of truth
-✔ Auto sync and drift correction enabled
-
-🔐 Repository Access via ArgoCD
-
-ArgoCD requires repository credentials:
-
-argocd/secrets/repo-credentials.yaml:
-
-apiVersion: v1
-kind: Secret
-metadata:
-  name: github-repo-creds
-  namespace: argocd
-  labels:
-    argocd.argoproj.io/secret-type: repo-creds
-stringData:
-  url: https://github.com/<your-repo>
-  username: <github-username>
-  password: <github-token>
-
-
-✔ Committed declaratively
-✔ No UI secret creation
-
-🔄 CI Workflow: Update Helm Chart Image Tags
-
-Your GitHub Actions CI pipeline now includes an additional job:
-
-Purpose
-
-After CI succeeds (build → tests → lint → docker push)
-
-Pull the Helm chart from the repo
-
-Update the image tag in values.yaml to the new version
-
-Commit the update
-
-Push to main branch
-
-This enables one-click deployments because ArgoCD automatically detects the update and deploys it.
-
-Sample Workflow Logic
-jobs:
-  update-helm-image-tag:
-    runs-on: self-hosted
-    needs: build-test-lint-push
-
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v3
-
-      - name: Update image tag
-        run: |
-          sed -i "s/tag:.*/tag: $NEW_IMAGE_TAG/" helm/student-api/values.yaml
-
-      - name: Commit changes
-        run: |
-          git config user.name "CI Bot"
-          git config user.email "ci-bot@example.com"
-          git commit -am "Update image tag to $NEW_IMAGE_TAG"
-          git push
-
-
-✔ Runs on your self-hosted GitHub runner
-✔ ArgoCD detects commit → auto syncs → deployment updated automatically
-
-⚙ Deploying Apps via ArgoCD (One Click)
-
-Once ArgoCD is installed and the Application manifests are applied:
-
-kubectl apply -f argocd/apps/ -n argocd
-
-
-ArgoCD now:
-
-Pulls your Helm chart
-
-Installs all components
-
-Monitors values.yaml for changes
-
-Syncs automatically on updates
-
-Applies drift correction
-
-Everything is GitOps-driven.
-
-🌐 Access ArgoCD UI (Optional)
-
-Expose port:
-
-kubectl port-forward svc/argocd-server -n argocd 8080:80
-
-
-Access UI:
-
-http://localhost:8080
-
-
-Fetch initial password:
-
-kubectl get secret argocd-initial-admin-secret \
-  -n argocd -o jsonpath="{.data.password}" | base64 -d
-
-
-
-
-
-----------------------------------
-
-Milestone 10 — Setup an Observability Stack (Prometheus, Loki, Grafana, Promtail)
-🎯 Objective
-
-This milestone focuses on setting up a complete observability stack using:
-
-Prometheus → Metrics
-
-Loki → Logs
-
-Promtail → Log collection
-
-Grafana → Visualization
-
-DB Metrics Exporter → Database monitoring
-
-Blackbox Exporter → Endpoint monitoring
-
-The goal is to achieve full visibility into the REST API, database, Vault, ArgoCD, and all dependent services deployed in the Kubernetes cluster.
-
-📘 Learning Outcomes
-
-By completing this milestone, you will learn:
-
-Concepts of monitoring, logging, and observability
-
-Prometheus metrics collection
-
-Loki log indexing & querying
-
-Promtail log scraping
-
-Grafana dashboards
-
-Exporters for application, DB, and network endpoint monitoring
-
-Configuring Kubernetes node selectors for dedicated observability workloads
-
-🚀 Problem Statement
-
-We need to deploy a complete PLG (Promtail, Loki, Grafana) stack with Prometheus to monitor:
-
-Our REST API
-
-Database
-
-Vault
-
-ArgoCD server
-
-All node-level metrics
-
-Application logs
-
-Endpoint uptime & latency
-
-Kubernetes cluster state
-
-The scope includes:
-
-Deploy all observability workloads on the dependent_services node.
-
-Use Helm charts for all components.
-
-Store all Helm charts/configs in the same GitHub repository in the correct structure.
-
-✔ Expectations & Architecture
-🧱 1. Deploy Prometheus, Loki, Grafana on a Dedicated Node
-
-All observability components must run on the dependent_services node in the namespace:
-
-observability
-
-
-Add node labels such as:
-
-kubectl label node <NODE_NAME> type=dependent_services
-
-
-Each Helm chart must include:
-
-nodeSelector:
-  type: dependent_services
-
-
-Components deployed:
-
-Prometheus
-
-Loki (TSDB schema)
-
-Grafana
-
-Kube-state-metrics
-
-Node-Exporter
-
-Blackbox Exporter
-
-DB Metrics Exporter
-
-Promtail
-
-📦 2. Promtail → Send Application Logs Only
-
-Promtail must:
-
-Tail logs only from API pods (via label selectors or file paths)
-
-Exclude logs from system pods, exporters, and other infrastructure
-
-Example:
-
-scrape_configs:
-  - job_name: student-api-logs
-    kubernetes_sd_configs:
-      - role: pod
-    relabel_configs:
-      - source_labels: [__meta_kubernetes_pod_label_app]
-        regex: student-api
-        action: keep
-
-
-This ensures only app logs go to Loki.
-
-📊 3. Deploy DB Metrics Exporter
-
-Depending on DB type:
-
-PostgreSQL → postgres-exporter
-
-MySQL → mysqld-exporter
-
-Exporter must run inside observability namespace.
-
-Prometheus scrape config example:
-
-- job_name: db-exporter
-  static_configs:
-    - targets: ['db-exporter.observability.svc:9187']
-
-🌐 4. Deploy Blackbox Exporter (Endpoint Monitoring)
-
-The blackbox exporter monitors:
-
-REST API (/health)
-
-ArgoCD server
-
-Hashicorp Vault
-
-DB endpoint (optional ping)
-
-Any internal service URL
-
-Example scrape config:
-
-- job_name: blackbox
-  metrics_path: /probe
-  params:
-    module: [http_2xx]
-  static_configs:
-    - targets:
-        - https://argocd-server.argocd.svc
-        - https://vault.vault.svc
-        - http://student-api.student-api.svc/health
-  relabel_configs:
-    - source_labels: [__address__]
-      target_label: __param_target
-    - target_label: instance
-      source_labels: [__param_target]
-    - target_label: __address__
-      replacement: blackbox-exporter.observability.svc:9115
-
-📈 5. Enable Kubernetes & Node-Level Metrics
-
-Prometheus must scrape:
-
-✔ kube-state-metrics
-
-Provides cluster object metrics (pods, deployments, PVCs, PVs).
-
-✔ node-exporter
-
-Provides CPU, RAM, Disk, and file system metrics.
-
-Both should run on all nodes.
-
-These must be installed via Helm charts.
-
-📄 6. Configure Grafana (Dashboards + Data Sources)
-
-Grafana must:
-
-Run in observability namespace
-
-Use dependent_services nodeSelector
-
-Include two data sources:
-
-Prometheus datasource
-http://prometheus-server.observability.svc:9090
-
-Loki datasource
-http://loki.observability.svc:3100
-
-
-You should also import dashboards for:
-
-API latency
-
-Node exporter / machine metrics
-
-DB metrics
-
-ArgoCD latency
-
-Vault health
-
-Pod health
-
-Log insights
-
-📁 7. Directory Structure (Helm Charts & Configs)
-
-Ensure all charts and configs are committed in your GitHub repository:
-
-helm/
-  observability/
-    prometheus/
-    loki/
-    grafana/
-    promtail/
-    blackbox-exporter/
-    db-exporter/
-    kube-state-metrics/
-    node-exporter/
-
-observability-configs/
-  dashboards/
-  loki-values.yaml
-  prom-values.yaml
-  promtail-values.yaml
-
-📘 Deployment Instructions (README)
-1. Create namespace
+### Deployment Instructions
+#### Step 1: Create Namespace
+```
 kubectl create namespace observability
+```
 
-2. Label the dependent_services node
-kubectl label node <NODE_NAME> type=dependent_services
+#### Step 2: Deploy kube-prometheus-stack
+```
+helm install prometheus \
+  ./kube-prometheus-stack \
+  -f ./override-values/values-kube-prome-stack.yaml \
+  -n observability
+```
 
-3. Deploy Prometheus + exporters
-helm install prometheus ./helm/observability/prometheus -n observability
+#### Step 3: Deploy Loki
+```
+helm install loki \
+  ./loki \
+  -f ./override-values/loki-doc.yaml \
+  -n observability
+```
 
-4. Deploy Loki
-helm install loki ./helm/observability/loki -n observability
+#### Step 4: Deploy Promtail (Application Logs Only)
+```
+helm install promtail \
+  ./promtail \
+  -f ./override-values/quick2.yaml \
+  -n observability
+```
 
-5. Deploy Promtail
-helm install promtail ./helm/observability/promtail -n observability
+#### Step 5: Deploy PostgreSQL Exporter
+```
+helm install postgres-exporter \
+  ./postgres-exporter \
+  -f ./override-values/values-postgres-exporter.yaml \
+  -n observability
+```
 
-6. Deploy Grafana
-helm install grafana ./helm/observability/grafana -n observability
+#### Step 6: Deploy Blackbox Exporter
+```
+helm install blackbox-exporter \
+  ./blackbox-exporter \
+  -f ./override-values/values-blackbox-exporter.yaml \
+  -n observability
+```
 
-7. Deploy DB exporter
-helm install db-exporter ./helm/observability/db-exporter -n observability
+#### Step 7: Deploy Grafana
+helm install grafana \
+  ./grafana \
+  -f ./override-values/values-grafana.yaml \
+  -n observability
 
-8. Deploy Blackbox exporter
-helm install blackbox ./helm/observability/blackbox-exporter -n observability
+
+### Validation Checklist
+
+- Prometheus targets show UP
+- Loki receiving application logs
+- Grafana dashboards load metrics & logs
+- DB exporter metrics visible
+- Blackbox probes reporting status
+- Alerts visible in Alertmanager
 
 ---------------------------------------------
 
-11 – Configure Dashboards & Alerts
-🎯 Learning Outcomes
-
-By completing this milestone, you will gain hands-on knowledge of:
-
-Key Observability Pillars (Logs, Metrics, Traces)
-
-USE (Utilization, Saturation, Errors) and RED (Rate, Errors, Duration) metrics
-
-Grafana dashboards creation & management
-
-Alerting best practices (Prometheus + Alertmanager + Slack notifications)
-
-📌 Problem Statement
-
-To make our system fully observable and production-ready, we must configure:
-
-Grafana dashboards for each major component
-
-Prometheus alerting rules for critical failure scenarios
-
-Slack integration to notify alerts in real time
-
-These dashboards and alerts will give clear visibility into:
-
-Application performance
-
-Database health
-
-System resource utilization
-
-Kubernetes object states
-
-External endpoint uptime via Blackbox exporter
-
-Error spikes + latency issues
-
-All dashboards and alerts must be created declaratively and stored inside the GitHub repository.
-
-✅ Expectations
-
-To successfully complete this milestone, ensure all of the following requirements are met.
-
-✔️ Grafana Dashboards
-
-You must configure and store dashboards for the following categories.
-Dashboards should be imported as JSON files inside:
-
-helm/observability-stack/grafana/dashboards/
-
-Required dashboards:
-1. DB Metrics Dashboard
-
-DB CPU/Mem usage
-
-Query throughput
-
-Slow queries
-
-Connection count
-
-Exported metrics via DB exporter
-
-2. Application Error Logs Dashboard
-
-Uses Loki as the datasource:
-
-Error count grouped by service
-
-Correlation by pod/container
-
-Filters for severity levels
-
-Time-based error trends
-
-3. Node Metrics Dashboard
-
-Uses node-exporter + Prometheus:
-
-CPU load
-
-Memory utilization
-
-Disk I/O
-
-Network traffic
-
-4. Kube-State Metrics Dashboard
-
-Using kube-state-metrics data:
-
-Pod restarts
-
-Deployment state
-
-CrashLoopBackOff
-
-Replica counts
-
-5. Blackbox Exporter Dashboard
-
-For external & internal endpoints:
-
-Uptime
-
-Response status codes
-
-Latency (p50/p90/p95/p99)
-
-Probe success/failures
-
-✔️ Alerting Requirements
-Alerts must be defined as PrometheusRule CRDs stored at:
-helm/observability-stack/prometheus/alerts/
-
-Required alert types:
-1. Disk & CPU Utilization
-
-node_cpu_usage > X%
-
-node_disk_usage > Y%
-
-2. Spike in Application Error Rate
-
-Example:
-
-increase({job="api"} |= "ERROR" [10m]) > threshold
-
-3. Latency Threshold Alerts
-
-Monitor p90, p95, p99:
-
-histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le))
-
-4. High Request Rate
-
-Detect traffic spikes:
-
-increase(http_requests_total[5m]) > threshold
-
-5. Pod Restart Alerts
-
-Specifically for:
-
-DB
-
-HashiCorp Vault
-
-ArgoCD Server
-
-Example:
-
-increase(kube_pod_container_status_restarts_total[10m]) > 0
-
-✔️ Slack Notification Integration
-
-You must configure Alertmanager to send alerts to Slack.
-
-Steps:
-
-Create a Slack Incoming Webhook URL
-
-Add a Kubernetes Secret:
-
-kubectl create secret generic alertmanager-slack-config \
-  --from-literal=slack_api_url=<YOUR_WEBHOOK>
-
-
-Reference this secret in alertmanager.yaml
-
-Configure receivers and routes for:
-
-Critical alerts
-
-Warning alerts
-
-Info alerts
-
-Stored at:
-
-helm/observability-stack/alertmanager/config/
-
-
-Alerts should post descriptive messages including:
-
-Alert name
-
-Affected component
-
-Namespace
-
-Node
-
-Current value
-
-Suggested resolution
-
-📁 Directory Structure (Required)
-helm/
-  observability-stack/
-    grafana/
-      dashboards/
-        db-metrics.json
-        app-logs.json
-        node-metrics.json
-        kube-state.json
-        blackbox.json
-    prometheus/
-      alerts/
-        cpu-disk-alerts.yaml
-        latency-alerts.yaml
-        error-rate-alerts.yaml
-        request-rate-alerts.yaml
-        pod-restart-alerts.yaml
-    alertmanager/
-      config/
-        alertmanager.yaml
-
-🚀 Deployment Instructions (Add to README.md)
-1. Deploy Observability Helm Chart
-cd helm/observability-stack
-helm upgrade --install observability . -n observability
-
-2. Verify Components
-kubectl get pods -n observability
-kubectl get prometheusrules -n observability
-kubectl get grafanadashboards -n observability
-
-3. Access Grafana
-kubectl port-forward svc/grafana 3000:80 -n observability
-
-
-Open: http://localhost:3000
-
-
-
-
-
-
+## 11 – Configure Dashboards & Alerts
+
+This milestone focuses on operational observability at runtime by configuring Grafana dashboards and Prometheus alerts to monitor system health, application behavior, and infrastructure reliability.
+Additionally, Slack notifications are configured to ensure alerts are delivered with clear, actionable messages.
+
+### Repository Structure (Relevant)
+```
+logging-monitoring/
+├── grafana/
+│   ├── templates/
+│   │   └── datasources-secrets/
+│   │       ├── prom-ds.yaml        # Prometheus datasource (Secret)
+│   │       └── loki-ds.yaml        # Loki datasource (Secret)
+│   ├── dashboards/                # Legacy reference (not mounted directly)
+│   └── values.yaml
+│
+├── kube-prometheus-stack/
+│   └── templates/
+│       ├── alertmanager/
+│       │   └── externalsecret.yaml
+│       └── prometheus/
+│           └── dashboards-cm/
+│               ├── node-exporter-cm.yaml
+│               └── kube-state-dash-cm.yaml
+│
+├── postgres-exporter/
+│   └── templates/
+│       └── dashboard-cm/
+│           └── postgres-dash-cm.yaml
+│
+├── backend/
+│   └── templates/
+│       ├── dashboard-cm/
+│       └── alerts/
+│
+├── blackbox-exporter/
+│   └── templates/
+│       └── dashboard-cm/
+│
+└── override-values/
+    └── values-kube-prome-stack.yaml
+
+```
+
+### Grafana Dashboards Configuration
+
+#### Dashboards are owned by the component they observe and exposed via ConfigMaps with sidecar labels :
+```
+logging-monitoring/grafana/dashboards/
+```
+
+#### Configured Dashboards
+| Component                  | Dashboard Location                                                                 |
+| -------------------------- | ---------------------------------------------------------------------------------- |
+| Node metrics               | `kube-prometheus-stack/templates/prometheus/dashboards-cm/node-exporter-cm.yaml`   |
+| Kubernetes state           | `kube-prometheus-stack/templates/prometheus/dashboards-cm/kube-state-dash-cm.yaml` |
+| PostgreSQL                 | `postgres-exporter/templates/dashboard-cm/postgres-dash-cm.yaml`                   |
+| Application metrics & logs | `backend/templates/dashboard-cm/`                                                  |
+| Blackbox probing           | `blackbox-exporter/templates/dashboard-cm/`                                        |
+
+
+#### Alerting Strategy
+
+#### Infrastructure Alerts (Prometheus)
+
+Defined under:
+```
+kube-prometheus-stack/templates/prometheus/custom-alerts/
+```
+Alerts include:
+- High CPU utilization
+- High disk utilization
+
+These alerts apply cluster-wide and run in the observability namespace.
+
+#### Application Alerts
+Defined inside the backend Helm chart under:
+```
+backend/templates/
+```
+Application-level alerts include:
+- Error rate spike in last 10 minutes
+- Increased request rate
+- Latency threshold breaches:
+  - p90
+  - p95
+  - p99
+These alerts are enabled via backend Helm values.yaml.
+
+#### Restart Alerts
+Restart alerts for:
+- Database
+- HashiCorp Vault
+- ArgoCD
+
+are enabled via:
+```
+override-values/values-kube-prome-stack.yaml
+```
+using Alertmanager rules exposed by kube-prometheus-stack.
+
+#### Slack Alert Notifications
+
+All alerts are delivered to Slack with descriptive messages.
+
+Slack Integration Details
+
+Slack Webhook URL is NOT hardcoded
+
+Retrieved securely using External Secrets
+
+ExternalSecret is located at:
+```
+kube-prometheus-stack/templates/alertmanager/externalsecret.yaml
+```
+
+#### Alert Scenarios Covered
+| Scenario                       | Alert Source            |
+| ------------------------------ | ----------------------- |
+| CPU & Disk threshold breach    | Prometheus infra alerts |
+| Error rate spike (10 min)      | Backend alerts          |
+| Latency increase (p90/p95/p99) | Backend alerts          |
+| High request volume            | Backend alerts          |
+| DB restart                     | kube-state-metrics      |
+| Vault restart                  | kube-state-metrics      |
+| ArgoCD restart                 | kube-state-metrics      |
+
+#### Deployment Notes
+
+#### Important
+Ensure alerting and ServiceMonitor flags are enabled for:
+- Backend application
+- ArgoCD
+- Vault
+If they were disabled in earlier milestones, re-enable them now to ensure:
+
+- Metrics are scraped
+- Alerts are triggered
+- Dashboards show complete data
+
+#### Validation Checklist
+- All Grafana dashboards load successfully
+- Prometheus targets are UP
+- Loki logs visible for application
+- Alerts appear in Alertmanager UI
+- Slack receives alert notifications
+- Restart alerts trigger on pod restarts
+
+Wherer to access the prometehus,grafana ,alertmanager argocd,vault,application,loki gateway etc prober blackbox with portnumbers
 
