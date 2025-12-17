@@ -1253,7 +1253,7 @@ Deployed in observability namespace
 
 #### Grafana
 - Deployed with Helm
-- Configured datasources:
+- Configured datasources(Sidecar):
   - Prometheus → Metrics
   - Loki → Logs
 - Secrets for admin credentials managed via Helm templates
@@ -1351,22 +1351,39 @@ This milestone focuses on operational observability at runtime by configuring Gr
 Additionally, Slack notifications are configured to ensure alerts are delivered with clear, actionable messages.
 
 ### Repository Structure (Relevant)
-
 ```
 logging-monitoring/
-├── blackbox-exporter/
 ├── grafana/
-│   ├── dashboards/
-│   │   ├── application.json
-│   │   ├── custom-dashboard.json
-│   │   ├── kube-state.json
-│   │   ├── node-exporter-dashboard.json
-│   │   └── postgres-exporter.json
+│   ├── templates/
+│   │   └── datasources-secrets/
+│   │       ├── prom-ds.yaml        # Prometheus datasource (Secret)
+│   │       └── loki-ds.yaml        # Loki datasource (Secret)
+│   ├── dashboards/                # Legacy reference (not mounted directly)
 │   └── values.yaml
+│
 ├── kube-prometheus-stack/
 │   └── templates/
-│       └── alertmanager/
-│           └── externalsecret.yaml   # Slack webhook secret
+│       ├── alertmanager/
+│       │   └── externalsecret.yaml
+│       └── prometheus/
+│           └── dashboards-cm/
+│               ├── node-exporter-cm.yaml
+│               └── kube-state-dash-cm.yaml
+│
+├── postgres-exporter/
+│   └── templates/
+│       └── dashboard-cm/
+│           └── postgres-dash-cm.yaml
+│
+├── backend/
+│   └── templates/
+│       ├── dashboard-cm/
+│       └── alerts/
+│
+├── blackbox-exporter/
+│   └── templates/
+│       └── dashboard-cm/
+│
 └── override-values/
     └── values-kube-prome-stack.yaml
 
@@ -1374,20 +1391,19 @@ logging-monitoring/
 
 ### Grafana Dashboards Configuration
 
-#### All Grafana dashboards are version-controlled and stored under:
+#### Dashboards are owned by the component they observe and exposed via ConfigMaps with sidecar labels :
 ```
 logging-monitoring/grafana/dashboards/
 ```
 
 #### Configured Dashboards
-
-| Dashboard                      | Purpose                                          |
-| ------------------------------ | ------------------------------------------------ |
-| `postgres-exporter.json`       | Database metrics (connections, queries, latency) |
-| `application.json`             | Application metrics & error visualization        |
-| `custom-dashboard.json`        | Aggregated service-level metrics                 |
-| `node-exporter-dashboard.json` | Node CPU, memory, disk, network                  |
-| `kube-state.json`              | Pod, deployment, replica & resource states       |
+| Component                  | Dashboard Location                                                                 |
+| -------------------------- | ---------------------------------------------------------------------------------- |
+| Node metrics               | `kube-prometheus-stack/templates/prometheus/dashboards-cm/node-exporter-cm.yaml`   |
+| Kubernetes state           | `kube-prometheus-stack/templates/prometheus/dashboards-cm/kube-state-dash-cm.yaml` |
+| PostgreSQL                 | `postgres-exporter/templates/dashboard-cm/postgres-dash-cm.yaml`                   |
+| Application metrics & logs | `backend/templates/dashboard-cm/`                                                  |
+| Blackbox probing           | `blackbox-exporter/templates/dashboard-cm/`                                        |
 
 
 #### Alerting Strategy
@@ -1478,3 +1494,4 @@ If they were disabled in earlier milestones, re-enable them now to ensure:
 - Restart alerts trigger on pod restarts
 
 Wherer to access the prometehus,grafana ,alertmanager argocd,vault,application,loki gateway etc prober blackbox with portnumbers
+
