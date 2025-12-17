@@ -24,6 +24,7 @@ env:
   FLASK_ENV: production
   POSTGRES_HOST: postgres-db
   POSTGRES_PORT: "5432"
+  LOG_LEVEL: "INFO"
 
 resources:
   requests:
@@ -33,17 +34,26 @@ resources:
     memory: "512Mi"
     cpu: "500m"
 
+# alerting and monitoring
+serviceMonitor:
+  enabled: true
+  interval: 30s
+  path: /metrics
+
+alerts:
+  enabled: true
+
 postgresql:
   architecture: standalone
   enabled: true
-  fullnameOverride: postgres-db #for this case the postgreshost of deploymen tand this should be same 
+  fullnameOverride: postgres-db #for this case the postgreshost of deploymen tand this should be same
   auth:
     existingSecret: db-secrets #for this i think look for url in vault check once
     secretKeys:
       adminPasswordKey: "POSTGRES_PASSWORD"
       userPasswordKey: "POSTGRES_PASSWORD"
     username: "dev_user"
-    database: "dev_db" 
+    database: "dev_db"
   primary:
     replicaCount: 1
     nodeSelector:

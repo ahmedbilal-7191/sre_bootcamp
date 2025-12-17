@@ -1,5 +1,5 @@
 import logging
-from flask import Flask, request, Response
+from flask import Flask, request, Response, jsonify
 from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
 from .extensions import db, migrate, ma, REQUEST_COUNT, REQUEST_LATENCY, get_prometheus_registry
 from .logging_config import setup_logging
@@ -33,6 +33,10 @@ def create_app(config_name=None):
 
     # Register blueprints
     app.register_blueprint(student_bp)
+    
+    @app.route("/healthcheck", methods=["GET"])
+    def health_check_global():
+        return jsonify({"status": "ok"}), 200
 
     # Register error handlers
     register_error_handlers(app)
@@ -47,7 +51,7 @@ def create_app(config_name=None):
     
     @app.before_request
     def suppress_log_for_probes():
-        if request.path in ["/metrics", "/api/v1/health"]:
+        if request.path in ["/metrics", "/healthcheck"]:
             logging.getLogger("werkzeug").disabled = True
 
         if request.path != "/metrics":
@@ -59,7 +63,7 @@ def create_app(config_name=None):
         logging.getLogger("werkzeug").disabled = False
 
         # Skip for health + metrics
-        if request.path in ["/metrics", "/api/v1/health"]:
+        if request.path in ["/metrics", "/healthcheck"]:
             return response
 
         method = request.method

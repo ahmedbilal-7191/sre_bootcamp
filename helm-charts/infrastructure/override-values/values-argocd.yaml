@@ -1,4 +1,3 @@
-
 global:
   nodeSelector:
     type: dependent_services
@@ -6,3 +5,23 @@ global:
 server:
   service:
     type: NodePort
+
+controller:
+  metrics:
+    rules:
+      enabled: true
+      namespace: "observability"
+      additionalLabels:
+        rules: alerting
+      spec:
+        - name: service-restart-alerts
+          rules:
+            - alert: ArgoCDRestarted
+              expr: increase(kube_pod_container_status_restarts_total{pod=~"argocd.*"}[10m]) > 0
+              for: 1m
+              labels:
+                severity: warning
+                team: devops
+              annotations:
+                summary: "ArgoCD restarted"
+                description: "ArgoCD pod restarted in the last 10 minutes."

@@ -3,7 +3,7 @@ from app.models.student import Student
 
 
 def test_health_check_route(client):
-    res = client.get("/api/v1/health")
+    res = client.get("/healthcheck")
     assert res.status_code == 200
     data = res.get_json()
     assert data["status"] == "ok"

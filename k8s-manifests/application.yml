@@ -67,7 +67,7 @@ spec:
             - containerPort: 5000
           readinessProbe:
             httpGet:
-              path: /api/v1/health
+              path: /healthcheck
               port: 5000
             initialDelaySeconds: 10
             periodSeconds: 10
@@ -99,5 +99,6 @@ data:
   FLASK_ENV: "production"
   POSTGRES_HOST: "postgres-service"
   POSTGRES_PORT: "5432"
+  LOG_LEVEL: "INFO"
 ---
 # Secrets From Vault

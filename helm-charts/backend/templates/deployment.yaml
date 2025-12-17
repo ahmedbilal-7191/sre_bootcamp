@@ -57,7 +57,7 @@ spec:
             {{- toYaml .Values.resources | nindent 12 }}
           readinessProbe:
             httpGet:
-              path: /api/v1/health
+              path: /healthcheck
               port: {{ .Values.containerPort }}
             initialDelaySeconds: 10
             periodSeconds: 10

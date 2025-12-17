@@ -1,3 +1,4 @@
+{{- if .Values.serviceMonitor.enabled }}
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
@@ -14,7 +15,9 @@ spec:
       app: backend # This selects your application's Service
   endpoints:
   - port: http-metrics    # Refers to the named port in your Service spec v.v imp check again
-    path: /metrics
+    path: {{ .Values.serviceMonitor.path }}
+    interval: {{ .Values.serviceMonitor.interval }}
   namespaceSelector: # This tells the ServiceMonitor to look in specific namespaces
     matchNames:
       - {{ .Release.Namespace }}
+{{- end }}

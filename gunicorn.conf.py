@@ -54,7 +54,7 @@ class SkipEndpointsFilter(logging.Filter):
     def filter(self, record):
         msg = record.getMessage()
         return not (
-            "/api/v1/health" in msg or "/metrics" in msg
+            "/healthcheck" in msg or "/metrics" in msg
         )
     
     

@@ -7,3 +7,4 @@ data:
   FLASK_ENV: {{ .Values.env.FLASK_ENV | quote }}
   POSTGRES_HOST: {{ .Values.env.POSTGRES_HOST | quote }}
   POSTGRES_PORT: {{ .Values.env.POSTGRES_PORT | quote }}
+  LOG_LEVEL: {{ .Values.env.LOG_LEVEL | quote }}

@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: grafana-prometheus-datasources
+  namespace: observability
+  labels:
+    grafana_datasource: 'dynamic' # default value for: sidecar.datasources.label
+stringData:
+  prom-ds.yaml: |-
+    apiVersion: 1
+    datasources:
+      - name: Prometheus
+        type: prometheus
+        uid: prometheusdatasource
+        url: http://prometheus-kube-prometheus-prometheus.observability.svc.cluster.local:9090
+        access: proxy
+        editable: true
+        isDefault: true

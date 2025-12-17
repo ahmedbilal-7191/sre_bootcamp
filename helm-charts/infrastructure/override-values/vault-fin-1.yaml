@@ -112,3 +112,20 @@ resources:
   limits:
     memory: "512Mi"
     cpu: "500m"
+
+
+serverTelemetry:
+  prometheusRules:
+    enabled: true            # enable PrometheusRule CR
+    selectors:
+      rules: alerting     # or whatever your kube-prometheus-stack uses
+    rules:
+      - alert: VaultRestarted
+        expr: increase(kube_pod_container_status_restarts_total{pod=~"vault.*"}[10m]) > 0
+        for: 1m
+        labels:
+          severity: critical
+          team: devops
+        annotations:
+          summary: "Vault restarted"
+          description: "Vault pod restarted in the last 10 minutes."

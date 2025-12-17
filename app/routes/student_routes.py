@@ -11,9 +11,9 @@ student_schema = StudentSchema()
 
 
 # Healthcheck
-@student_bp.route("/health", methods=["GET"])
-def health_check():
-    return jsonify({"status": "ok"}), 200
+# @student_bp.route("/health", methods=["GET"])
+# def health_check():
+#     return jsonify({"status": "ok"}), 200
 
 
 @student_bp.route("/error", methods=["GET"])
