@@ -1350,7 +1350,7 @@ helm install grafana \
 This milestone focuses on operational observability at runtime by configuring Grafana dashboards and Prometheus alerts to monitor system health, application behavior, and infrastructure reliability.
 Additionally, Slack notifications are configured to ensure alerts are delivered with clear, actionable messages.
 
-### Repository Structure (Relevant)
+### Repository Structure
 ```
 logging-monitoring/
 ├── grafana/
@@ -1390,21 +1390,16 @@ logging-monitoring/
 ```
 
 ### Grafana Dashboards Configuration
-
-#### Dashboards are owned by the component they observe and exposed via ConfigMaps with sidecar labels :
-```
-logging-monitoring/grafana/dashboards/
-```
+#### Dashboards are owned by the component they observe and exposed to Grafana via ConfigMaps rendered using .Files.Get.
 
 #### Configured Dashboards
-| Component                  | Dashboard Location                                                                 |
-| -------------------------- | ---------------------------------------------------------------------------------- |
-| Node metrics               | `kube-prometheus-stack/templates/prometheus/dashboards-cm/node-exporter-cm.yaml`   |
-| Kubernetes state           | `kube-prometheus-stack/templates/prometheus/dashboards-cm/kube-state-dash-cm.yaml` |
-| PostgreSQL                 | `postgres-exporter/templates/dashboard-cm/postgres-dash-cm.yaml`                   |
-| Application metrics & logs | `backend/templates/dashboard-cm/`                                                  |
-| Blackbox probing           | `blackbox-exporter/templates/dashboard-cm/`                                        |
-
+| Component                  | Dashboard Source                                                | ConfigMap Location                                                                 |
+| -------------------------- | --------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| Node metrics               | `kube-prometheus-stack/dashboards/node-exporter-dashboard.json` | `kube-prometheus-stack/templates/prometheus/dashboards-cm/node-exporter-cm.yaml`   |
+| Kubernetes state           | `kube-prometheus-stack/dashboards/kube-state.json`              | `kube-prometheus-stack/templates/prometheus/dashboards-cm/kube-state-dash-cm.yaml` |
+| PostgreSQL                 | `postgres-exporter/dashboards/postgres-exporter.json`           | `postgres-exporter/templates/dashboard-cm/postgres-dash-cm.yaml`                   |
+| Application metrics & logs | `backend/dashboards/*.json`                                     | `backend/templates/dashboard-cm/`                                                  |
+| Blackbox probing           | `blackbox-exporter/dashboards/*.json`                           | `blackbox-exporter/templates/dashboard-cm/`                                        |
 
 #### Alerting Strategy
 
@@ -1494,6 +1489,7 @@ If they were disabled in earlier milestones, re-enable them now to ensure:
 - Restart alerts trigger on pod restarts
 
 Wherer to access the prometehus,grafana ,alertmanager argocd,vault,application,loki gateway etc prober blackbox with portnumbers
+
 
 
 
