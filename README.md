@@ -58,8 +58,8 @@ Ensure the following are installed on your system:
 
 #### 1.Clone the repository
 ```
-git clone https://github.com/<your-username>/sre-bootcamp-students-api.git
-cd sre-bootcamp-students-api
+git clone https://github.com/https://github.com/ahmedbilal-7191/sre_bootcamp.git
+cd sre_bootcamp
 ```
 
 #### 2.Create local .env by copying:
@@ -1494,4 +1494,5 @@ If they were disabled in earlier milestones, re-enable them now to ensure:
 - Restart alerts trigger on pod restarts
 
 Wherer to access the prometehus,grafana ,alertmanager argocd,vault,application,loki gateway etc prober blackbox with portnumbers
+
 
