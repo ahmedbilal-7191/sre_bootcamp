@@ -92,9 +92,9 @@ make build
 - `python -m pip install --upgrade pip`
 - `pip install --no-cache-dir -r requirements.dev.txt`
 
-the current project has migrations folder to github so if wantt o use thaat  no need to initializa if begeing withou the migrations folder then 
-
 #### 5.Initialize DB Migrations (run once)
+
+##### Since this project already includes a committed migrations/ folder, migration initialization is not required; initialization is only needed when starting a project without an existing migrations/ directory.
 ```
 make migrate-init
 ```
@@ -295,7 +295,7 @@ Example Response:
 
 ### Environment Configuration
 
-All configuration is passed through environment variables, following 12-Factor App standards.
+All configuration is passed through environment variables.
 
 Below is the list of environment variables used by the application:
 
@@ -420,7 +420,8 @@ This milestone focuses on simplifying local development, enabling any team membe
 | Target                        | Description                                 |
 | ----------------------------- | ------------------------------------------- |
 | `make db-up`                  | Starts the database service                 |
-| `make db-down`                | Runs database DML migrations                |
+| `make db-down`                | Stops the database service                  |
+| `make db-migrate`                | Runs database DML migrations             |
 | `make db-status`              | Show database container status            |
 | `make docker-build`              | Build the REST API Docker image (SemVer tagging supported) | 
 | `make docker-run` | Run the API container using `.env`  |
@@ -437,18 +438,14 @@ make db-up
 - Starts the DB container
 - Creates the network if needed
 
-#### 2️.Run Database DML Migrations to be done
+#### 2️.Run Database DML Migrations 
 ```
 make db-migrate
 ```
 
 - Check whether DB is reachable
 - Applies all DML migrations
-Alternatively, you can run migrations directly using the backend container:
-```
-docker compose run --rm backend flask db migrate
-docker compose run --rm backend flask db upgrade
-```
+
 
 #### 3️.Build the API Docker Image
 ```
@@ -547,8 +544,8 @@ This milestone focuses on deploying the REST API and supporting services on a ba
 
 ### Prerequisites (Host)
 
-- Vagrant
-- VirtualBox
+- Vagrant https://developer.hashicorp.com/vagrant/install
+- VirtualBox https://www.virtualbox.org/wiki/Downloads
 
 ### Step-by-Step Local Setup
 
@@ -577,9 +574,6 @@ Starts:
 1 Nginx load balancer
 
 Runs DB migrations automatically
-
-
-
 
 #### 3.Access API (via Nginx)
 ```
@@ -743,6 +737,7 @@ The CSI HostPath StorageClass uses volumeBindingMode: WaitForFirstConsumer. This
 
 This behavior prevents common issues such as Pods stuck in a Pending state, volumes being created on incorrect nodes, and node affinity or scheduling conflicts.
 
+(paste the storage class yaml config here best TBD)
 ------------------------------------
 
 ## Milestone 7 – Deploy REST API & Dependent Services in Kubernetes
@@ -1051,11 +1046,10 @@ Once configured, ESO automatically syncs secrets from Vault into the target name
 
 Deploy the backend Helm chart:
 ```
-helm install student-api helm-charts/backend -n student-api
+helm install backend helm-charts/backend -n student-api
 ```
 
 #### Notes
-
 - The backend chart includes ExternalSecret templates
 - Disable the following if observability is not installed:
 ```
@@ -1077,7 +1071,7 @@ kubectl get svc -n student-api
 
 Example URL:
 ```
-http://<NODE-IP>:32000
+http://<NODE-IP>:5000
 ```
 
 ### API Testing
@@ -1280,11 +1274,15 @@ Alerts are fired as expected
 Dashboards show complete data
 
 
-
 ### Deployment Instructions
 #### Step 1: Create Namespace
 ```
 kubectl create namespace observability
+```
+
+##### Apply ClusterSecretStore(If not applied previously)
+```
+kubectl apply -f external-secrets/clusterstore.yaml
 ```
 
 #### Step 2: Deploy kube-prometheus-stack
@@ -1488,8 +1486,7 @@ If they were disabled in earlier milestones, re-enable them now to ensure:
 - Slack receives alert notifications
 - Restart alerts trigger on pod restarts
 
-Wherer to access the prometehus,grafana ,alertmanager argocd,vault,application,loki gateway etc prober blackbox with portnumbers
-
+Wherer to access the prometehus,grafana ,alertmanager argocd,vault,application,loki gateway etc prober blackbox with portnumbers make a table
 
 
 
