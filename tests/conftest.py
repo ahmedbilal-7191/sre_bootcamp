@@ -8,7 +8,7 @@ load_dotenv()
 
 @pytest.fixture
 def app():
-    app = create_app("testing")  # ensure you add a "testing" config with SQLite in-memory
+    app = create_app("testing")  # adding a "testing" config with SQLite in-memory in hte main app
     with app.app_context():
         db.create_all()
         yield app

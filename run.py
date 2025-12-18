@@ -8,8 +8,6 @@ if "PROMETHEUS_MULTIPROC_DIR" in os.environ:
     shutil.rmtree(os.environ["PROMETHEUS_MULTIPROC_DIR"], ignore_errors=True)
     os.makedirs(os.environ["PROMETHEUS_MULTIPROC_DIR"], exist_ok=True)
 
-# Load environment variables from .env
-
 
 # Pick config name from env (default = development)
 config_name = os.getenv("FLASK_ENV", "development")

@@ -1,8 +1,5 @@
 admin:
-  ## Name of the secret. Can be templated.
   existingSecret: "grafana-secret"
-    #userKey: admin-user
-    #passwordKey: admin-password
 nodeSelector:
   type: dependent_services
 
@@ -12,74 +9,109 @@ service:
 
 persistence:
   enabled: true
-  storageClassName: csi-hostpath-sc     # Adjust to your storage class
+  storageClassName: csi-hostpath-sc
   accessModes:
     - ReadWriteOnce
   size: 5Gi
   type: pvc
-datasources:
-  datasources.yaml:
-    apiVersion: 1
-    datasources:
-      - name: Prometheus
-        type: prometheus
-        uid: prometheusdatasource
-        url: http://prometheus-kube-prometheus-prometheus.observability.svc.cluster.local:9090
-        access: proxy
-        editable: true
-        isDefault: true
-      - name: Loki
-        type: loki
-        url: http://loki-gateway.observability.svc.cluster.local
-        uid: lokidatasource
-        access: proxy
-        editable: true
-        jsonData:
-          httpHeaderName1: "X-Scope-OrgID"
-        secureJsonData:
-          httpHeaderValue1: "1"
-dashboardProviders:
-  dashboardproviders.yaml:
-    apiVersion: 1
-    providers:
-    - name: 'default'
-      orgId: 1
-      folder: ''
+
+sidecar:
+  dashboards:
+    enabled: true
+    label: grafana_dashboard
+    labelValue: "dynamic"
+    provider:
+      name: sidecarProvider
+      orgid: 1
+      folder: 'Grafana Dashboards'
       type: file
-      disableDeletion: false
-      editable: true
-      options:
-        path: /var/lib/grafana/dashboards/default
-dashboards:
-  default:
-    custom-dashboard:
-      file: dashboards/custom-dashboard.json
-    node-exporter:
-      file: dashboards/node-exporter-dashboard.json
-    kube-state-metrics:
-      file: dashboards/kube-state.json
-    applog-metrics:
-      file: dashboards/application.json  
-    db-metrics:
-      file: dashboards/postgres-exporter.json
+      # allow updating provisioned dashboards from the UI
+      allowUiUpdates: false
 
-          #dashboards:
-          #  default:
-          #    node-overview:
-          #      file: dashboards/node-overview.json
-          #    loki-logs:
-          #      file: dashboards/loki-logs.json
+  datasources:
+    enabled: true
+    label: grafana_datasource
+    labelValue: "dynamic"
 
-        #dashboardProviders:
-        #  dashboardproviders.yaml:
-        #    apiVersion: 1
-        #    providers:
-        #      - name: 'default'
-        #        orgId: 1
-        #        folder: ''
-        #        type: file
-        #        disableDeletion: false
-        #        editable: true
-        #        updateIntervalSeconds: 10
-        #        options:
-        #          path: /var/lib/grafana/dashboards/default
+
+
+
+
+
+
+
+
+
+
+
+
+# admin:
+#   ## Name of the secret. Can be templated.
+#   existingSecret: "grafana-secret"
+#     #userKey: admin-user
+#     #passwordKey: admin-password
+# nodeSelector:
+#   type: dependent_services
+
+# service:
+#   type: NodePort
+#   port: 80
+
+# persistence:
+#   enabled: true
+#   storageClassName: csi-hostpath-sc     # Adjust to your storage class
+#   accessModes:
+#     - ReadWriteOnce
+#   size: 5Gi
+#   type: pvc
+
+
+
+
+# datasources:
+#   datasources.yaml:
+#     apiVersion: 1
+#     datasources:
+#       - name: Prometheus
+#         type: prometheus
+#         uid: prometheusdatasource
+#         url: http://prometheus-kube-prometheus-prometheus.observability.svc.cluster.local:9090
+#         access: proxy
+#         editable: true
+#         isDefault: true
+#       - name: Loki
+#         type: loki
+#         url: http://loki-gateway.observability.svc.cluster.local
+#         uid: lokidatasource
+#         access: proxy
+#         editable: true
+#         jsonData:
+#           httpHeaderName1: "X-Scope-OrgID"
+#         secureJsonData:
+#           httpHeaderValue1: "1"
+# dashboardProviders:
+#   dashboardproviders.yaml:
+#     apiVersion: 1
+#     providers:
+#     - name: 'default'
+#       orgId: 1
+#       folder: ''
+#       type: file
+#       disableDeletion: false
+#       editable: true
+#       options:
+#         path: /var/lib/grafana/dashboards/default
+# dashboards:
+#   default:
+#     custom-dashboard:
+#       file: dashboards/custom-dashboard.json
+#     node-exporter:
+#       file: dashboards/node-exporter-dashboard.json
+#     kube-state-metrics:
+#       file: dashboards/kube-state.json
+#     applog-metrics:
+#       file: dashboards/application.json  
+#     db-metrics:
+#       file: dashboards/postgres-exporter.json
+
+         

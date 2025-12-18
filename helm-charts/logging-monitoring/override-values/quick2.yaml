@@ -4,7 +4,7 @@ config:
       tenant_id: 1
   logLevel: debug
   snippets:
-    # Inject into every scrape_config's relabel_configs
+    # Injected into every scrape_config's relabel_configs
     extraRelabelConfigs:
       - source_labels: [__meta_kubernetes_namespace]
         action: keep
@@ -13,7 +13,7 @@ config:
     # Injected into every scrape_config's pipeline_stages
     pipelineStages:
 
-      # 1. Extract CRI log fields (outer JSON)
+      # 1. Extracting CRI log fields (outer JSON)
       - json:
           expressions:
             log: log
@@ -60,6 +60,7 @@ config:
 nodeSelector:
   type: application
 
+# this is happedning because of inotify watch limits 
 initContainer:
   - name: increase-inotify
     image: busybox:1.33

@@ -1,5 +1,4 @@
 admin:
-  ## Name of the secret. Can be templated.
   existingSecret: "grafana-secret"
 nodeSelector:
   type: dependent_services
@@ -10,7 +9,7 @@ service:
 
 persistence:
   enabled: true
-  storageClassName: csi-hostpath-sc     # Adjust to your storage class
+  storageClassName: csi-hostpath-sc
   accessModes:
     - ReadWriteOnce
   size: 5Gi

@@ -10,7 +10,7 @@ metadata:
 spec:
   selector:
     matchLabels:
-      app: my-backend # This selects your application's Service
+      app: my-backend # This selects your application's Service actual mein app: backedn hai sirf fix this 
   endpoints:
   - port: http-metrics    # Refers to the named port in your Service spec
     path: /metrics

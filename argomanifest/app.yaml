@@ -5,24 +5,24 @@ metadata:
   namespace: argocd # Application resources are typically in the Argo CD namespace
 spec:
   project: default # Use the 'default' project or specify your own
-  # Defines the source of the application
+  # source of the application
   source:
     # Must match the URL defined in the Secret (private-repo-creds)
     repoURL: "https://github.com/ahmedbilal-7191/sre_bootcamp.git"
     # The Git revision (branch, tag, or commit hash) to track
     targetRevision: HEAD
-    # FIX: The path *within* the repository to the Helm chart folder
+    # FIX: The path within the repository to the Helm chart folder
     path: "helm-charts/backend"
     # 'chart' field removed as it's not needed for Git-sourced charts
   # Defines the destination (where the application will be deployed)
   destination:
     server: "https://kubernetes.default.svc" # Deploys to the same cluster Argo CD is running in
-    # FIX: Ensure this namespace matches your chart's hardcoded namespace logic (e.g., if your chart uses .Release.Name, this should be 'private-helm-app')
-    namespace: student-api # or private-helm-app
+    # FIX: Ensure this namespace matches  chart's namespace
+    namespace: student-api 
   # Configuration for Argo CD's deployment behavior
   syncPolicy:
     automated:
       prune: true # Allow Argo CD to delete resources removed from the Git repository
       selfHeal: true # Allow Argo CD to correct manual changes to match the desired state in Git
     syncOptions:
-    - CreateNamespace=true # Add this if 'my-app-namespace' doesn't exist
+    - CreateNamespace=true # if 'student-api' doesn't exist

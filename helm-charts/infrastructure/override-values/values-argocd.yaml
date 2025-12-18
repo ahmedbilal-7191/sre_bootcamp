@@ -9,7 +9,7 @@ server:
 controller:
   metrics:
     rules:
-      enabled: true
+      enabled: true #disable if not using log and monitoring
       namespace: "observability"
       additionalLabels:
         rules: alerting

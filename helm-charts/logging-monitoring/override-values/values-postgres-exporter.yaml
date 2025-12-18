@@ -11,12 +11,12 @@ config:
     passwordSecret:
       name: db-secrets
       key: POSTGRES_PASSWORD
-    host: "postgres-service.test.svc.cluster.local"  # Replace with your PostgreSQL service name
+    host: "postgres-service.student-api.svc.cluster.local"  # Replace with your PostgreSQL service name also i can add complete url instead from the secret of vault 
     port: "5432"
     database: "dev_db"  # Database to connect to
     sslmode: "disable"  # Use 'require' for SSL connections
   
-  # Auto-discover databases (optional)
+
   autoDiscoverDatabases: true
   
 nodeSelector:

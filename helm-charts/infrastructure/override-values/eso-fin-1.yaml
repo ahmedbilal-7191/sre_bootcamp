@@ -3,6 +3,7 @@ namespace: external-secrets
 global:
   nodeSelector:
     type: dependent_services
+    
 # Ensure CRDs are installed with the release
 installCRDs: true
 
@@ -18,7 +19,6 @@ controller:
   # Number of controller replicas
   replicaCount: 1
 
-  # Pod resources (optional, can adjust later)
   resources:
     requests:
       cpu: 100m
@@ -26,13 +26,6 @@ controller:
     limits:
       cpu: 500m
       memory: 256Mi
-
-  # Optional tolerations (if your dependent node has taints)
-  # tolerations:
-  #   - key: "type"
-  #     operator: "Equal"
-  #     value: "dependent"
-  #     effect: "NoSchedule"
 
 # Webhook component (used for validation and mutation)
 webhook:

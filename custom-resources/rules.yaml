@@ -8,9 +8,8 @@ metadata:
 spec:
   groups:
 
-  # ---------------------------------------------------------
-  # 1. Host Alerts (CPU, Disk)
-  # ---------------------------------------------------------
+
+  # Host Alerts (CPU, Disk)
   - name: host-alerts
     rules:
       - alert: HighCpuUtilization
@@ -37,9 +36,8 @@ spec:
           description: "Disk usage is above 90% for more than 10 minutes."
 
 
-  # ---------------------------------------------------------
-  # 2. Error Rate Spike Alerts
-  # ---------------------------------------------------------
+  # Error Rate Spike Alerts
+
   - name: error-rate-alerts
     rules:
       - alert: HighErrorRateSpike
@@ -58,9 +56,9 @@ spec:
             Current: {{ $value | humanizePercentage }}
 
 
-  # ---------------------------------------------------------
-  # 3. Latency Alerts (P90 / P95 / P99)
-  # ---------------------------------------------------------
+
+  # Latency Alerts (P90 / P95 / P99)
+
   - name: service-latency-alerts
     rules:
       - alert: HighRequestLatencyP90
@@ -106,9 +104,8 @@ spec:
             P99 latency > 2s for 2 minutes. Current: {{ $value }}s
 
 
-  # ---------------------------------------------------------
-  # 4. Restart Alerts for DB / ArgoCD / Vault
-  # ---------------------------------------------------------
+  # Restart Alerts for DB / ArgoCD / Vault
+
   - name: service-restart-alerts
     rules:
       - alert: DatabaseRestarted
@@ -142,9 +139,8 @@ spec:
           description: "Vault pod restarted in the last 10 minutes."
 
 
-  # ---------------------------------------------------------
-  # 5. Your Existing Application Alerts
-  # ---------------------------------------------------------
+  #  Existing Application Alerts
+
   - name: application-health
     rules:
       - alert: HighRequestErrorRate

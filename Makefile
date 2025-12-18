@@ -1,78 +1,17 @@
-# .PHONY: run install lint test build-local-api run-local-api build-docker-api start-db migrate build-api start-api create-venv activate-venv 
-# # create-venv:
-# # 	python -m venv venv
-# # 	@echo "Virtual environment created. To activate, run 'venv\Scripts\activate' on Windows."
-# # activate-venv:
-# # 	venv\Scripts\activate
-
-# build:
-# 	@echo "Building local API..."
-# 	python -m pip install --upgrade pip
-# 	pip install --no-cache-dir -r requirements.dev.txt
-# 	@echo "Local API build done..."
-# migrate:
-#     @echo "Checking for migration message..."
-# 	@if [ -z "$(M)" ]; then \
-# 		read -p "Enter a migration message: " MESSAGE; \
-# 		flask db migrate -m "$$MESSAGE"; \
-# 	else \
-# 		flask db migrate -m "$(M)"; \
-# 	fi
-# 	this is not working ..
-# upgrade:
-# 	flask db upgrade
-# run:
-# 	@echo "Running the application..."
-# 	python run.py
-# run-gunicorn:
-# 	@echo "Starting API using Gunicorn..."
-# 	gunicorn -w 2 -b 0.0.0.0:5000 run:app
-# test:
-# 	pytest -v --cov=app --cov-report=term-missing
-# lint:
-# 	flake8 app tests run.py
-# 	-pylint app tests run.py
-
-# build-docker-api:
-# 	@echo "Building Docker API..."
-# 	docker build -t backend:1.0.0 .
-# 	@echo "Docker API build done..."
-# start-db:
-# 	docker compose up -d db
-# migrate:
-# 	docker compose run --rm migrate
-# build-api:
-# 	docker compose build backend
-# start-api: build-api
-# 	docker compose up -d backend
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 # Global configuration
 
-APP_NAME        := backend
-IMAGE_NAME      := backend
-IMAGE_TAG       ?= 1.0.0
-COMPOSE_FILE    := docker-compose.yml
-ENV_FILE        := .env
+APP_NAME := backend
+IMAGE_NAME := backend
+IMAGE_TAG ?= 1.0.0
+COMPOSE_FILE := docker-compose.yml
+ENV_FILE := .env
 
-PYTHON          := python
-PIP             := pip
-FLASK           := flask
+PYTHON := python
+PIP := pip
+FLASK := flask
 
-BAREMETAL_COMPOSE = docker-compose.baremetal.yml  
-#once check the above env 
+BAREMETAL_COMPOSE := docker-compose.baremetal.yml  
+# once check the above env 
 
 # Export env vars from .env if present
 ifneq (,$(wildcard $(ENV_FILE)))
@@ -86,7 +25,7 @@ endif
 	migrate-init migrate-create migrate-upgrade \
 	docker-build docker-run \
 	compose-build compose-up compose-down \
-	ci-build ci-test ci-lint ci-docker
+	deploy-baremetal destroy-baremetal
 
 
 # Help
@@ -115,7 +54,8 @@ help:
 	@echo "  compose-up         Start DB, run migrations, start API"
 	@echo "  compose-down       Stop all services"
 	@echo ""
-	@echo "  ci-*               Targets used by CI pipeline"
+	@echo "  deploy-baremetal   Deploy full stack (Nginx + 2 APIs + DB)"
+	@echo "  destroy-baremetal  Stop baremetal deployment"
 
 
 # Local development
@@ -160,6 +100,9 @@ db-down:
 db-status:
 	docker compose ps db
 
+db-migrate:
+	@echo "Running database migrations using Docker Compose..."
+	docker compose run --rm migrate
 
 # Migrations (Flask + DB)
 
@@ -169,7 +112,7 @@ migrate-init:
 
 migrate-create:
 	@if [ -z "$(M)" ]; then \
-		echo "❌ Migration message missing. Use: make migrate-create M=\"message\""; \
+		echo "Migration message missing. Use: make migrate-create M=\"message\""; \
 		exit 1; \
 	fi
 	@echo "Creating migration: $(M)"
@@ -190,9 +133,9 @@ docker-run:
 	@echo "Running Docker container..."
 	docker run --env-file $(ENV_FILE) -p 5000:5000 $(IMAGE_NAME):$(IMAGE_TAG)
 
-# -----------------------------
+
 # Docker Compose (full stack)
-# -----------------------------
+
 compose-build:
 	@echo "Building services..."
 	docker compose build
@@ -209,24 +152,7 @@ compose-down:
 	@echo "Stopping all services..."
 	docker compose down
 
-# -----------------------------
-# CI targets (used by GitHub Actions)
-# -----------------------------
-ci-build:
-	@echo "CI: Build API"
-	make build
 
-ci-test:
-	@echo "CI: Run tests"
-	make test
-
-ci-lint:
-	@echo "CI: Run linting"
-	make lint
-
-ci-docker:
-	@echo "CI: Build Docker image"
-	docker build -t $(IMAGE_NAME):$(IMAGE_TAG) .
 
 deploy-baremetal:
 	@echo "Deploying full stack (Nginx + 2 APIs + DB)..."
@@ -235,3 +161,4 @@ deploy-baremetal:
 destroy-baremetal:
 	@echo "Stopping baremetal deployment..."
 	docker compose -f $(BAREMETAL_COMPOSE) down
+	
