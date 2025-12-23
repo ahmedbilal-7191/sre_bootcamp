@@ -47,7 +47,10 @@ spec:
         - name: backend-container
           image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
           ports:
-            - containerPort: {{ .Values.containerPort }}
+            - name: web
+              containerPort: {{ .Values.containerPort }}
+          # ports:
+          #   - containerPort: {{ .Values.containerPort }}
           envFrom:
             - configMapRef:
                 name: backend-config

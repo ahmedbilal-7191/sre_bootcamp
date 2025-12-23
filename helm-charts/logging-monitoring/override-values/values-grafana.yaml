@@ -20,6 +20,7 @@ sidecar:
     enabled: true
     label: grafana_dashboard
     labelValue: "dynamic"
+    searchNamespace: ALL
     provider:
       name: sidecarProvider
       orgid: 1

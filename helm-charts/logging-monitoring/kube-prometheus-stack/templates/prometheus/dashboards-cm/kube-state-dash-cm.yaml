@@ -5,5 +5,5 @@ metadata:
   labels:
     grafana_dashboard: "dynamic"
 data:
-  node-exporter.json: |
+  kube-state-metrics-dashboard.json: |
 {{ .Files.Get "dashboards/kube-state.json" | indent 4 }}

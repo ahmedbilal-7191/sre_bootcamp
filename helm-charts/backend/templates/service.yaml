@@ -10,6 +10,6 @@ spec:
   selector:
     app: backend
   ports:
-    - protocol: TCP
+    - name: web
       port: {{ .Values.service.port }}
       targetPort: {{ .Values.containerPort }}

@@ -3,7 +3,7 @@ kind: ConfigMap
 metadata:
   name: app-metrics-dashboard
   labels:
-    grafana_dashboard: "dynamic"
+    grafana_dashboard: "dynamic" 
 data:
-  node-exporter.json: |
-{{ .Files.Get "dashboards/application.json" | indent 4 }}
+  application-dashboard.json: |
+{{ .Files.Get "dashboards/application1.json" | indent 4 }}

@@ -8,9 +8,8 @@ metadata:
 spec:
   groups:
 
-  # ---------------------------------------------------------
-  # 1. Host Alerts (CPU, Disk)
-  # ---------------------------------------------------------
+  # Host Alerts (CPU, Disk)
+
   - name: host-alerts
     rules:
       - alert: HighCpuUtilization

@@ -5,5 +5,5 @@ metadata:
   labels:
     grafana_dashboard: "dynamic"
 data:
-  node-exporter.json: |
+  postgres-db-dashboard.json: |
 {{ .Files.Get "dashboards/postgres-exporter.json" | indent 4 }}
