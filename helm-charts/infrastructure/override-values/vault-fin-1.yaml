@@ -121,8 +121,7 @@ serverTelemetry:
       rules: alerting     # or whatever your kube-prometheus-stack uses
     rules:
       - alert: VaultRestarted
-        expr: increase(kube_pod_container_status_restarts_total{pod=~"vault.*"}[10m]) > 0
-        for: 1m
+        expr: sum by (pod) (increase(kube_pod_container_status_restarts_total{pod=~"vault.*"}[5m])) > 0
         labels:
           severity: critical
           team: devops

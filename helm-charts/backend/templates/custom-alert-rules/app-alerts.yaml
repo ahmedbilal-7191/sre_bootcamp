@@ -13,9 +13,11 @@ spec:
     rules:
       - alert: HighErrorRateSpike
         expr: |
-          sum(rate(http_requests_total{status=~"5.."}[10m]))
+          sum(rate(http_requests_total{http_status=~"5.."}[10m]))
           /
-          sum(rate(http_requests_total[10m])) > 0.05
+          sum(rate(http_requests_total[10m])) > 0.05 
+          AND
+          sum(rate(http_requests_total[10m])) > 1
         for: 5m
         labels:
           severity: critical
@@ -37,7 +39,7 @@ spec:
           ) > 0.5
         for: 10m
         labels:
-          severity: warning
+          severity: critical
           team: devops
         annotations:
           summary: "High P90 request latency for {{`{{ $labels.job }}`}}"
@@ -51,7 +53,7 @@ spec:
           ) > 1
         for: 5m
         labels:
-          severity: page
+          severity: critical
           team: devops
         annotations:
           summary: "High P95 request latency for {{`{{ $labels.job }}`}}"

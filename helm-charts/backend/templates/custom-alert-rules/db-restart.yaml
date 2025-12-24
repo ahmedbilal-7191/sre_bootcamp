@@ -13,12 +13,11 @@ spec:
   - name: service-restart-alerts
     rules:
       - alert: DatabaseRestarted
-        expr: increase(kube_pod_container_status_restarts_total{pod=~"postgres.*"}[10m]) > 0
-        for: 1m
+        expr: sum by (pod) (increase(kube_pod_container_status_restarts_total{pod=~"postgres-db.*"}[5m])) > 0
         labels:
           severity: critical
           team: devops
         annotations:
           summary: "Database pod restarted"
-          description: "Postgres pod restarted in the last 10 minutes."
+          description: "Postgres pod restarted in the last 5 minutes."
 {{- end }}

@@ -1,0 +1,283 @@
+{
+	"info": {
+		"_postman_id": "b108daac-e5f8-4d0b-816e-08e719274195",
+		"name": "Student API CRUD(SRE)",
+		"description": "This Postman collection is designed to test and validate the **Student Management REST API** used in the SRE project.\n\nIt covers **CRUD operations**, **health checks**, **variables**, and **basic API testing practices**.EndFragment\n\n# 🚀Get started here\n\n### Set Up Environment Variables\n\nCreate a Postman environment with the following variables:\n\n| Variable | Example Value |\n| --- | --- |\n| `base_url` | `https://api.example.com` |\n| `student_id` | `1` |\n\n🔁 Replace `base_url` with your actual API endpoint (Kubernetes Ingress / LoadBalancer / localhost).\n\n### API Workflow\n\n1. **Health Check** – verify API availability\n    \n2. **Add Student** – create a new student\n    \n3. **Get Students** – list all students\n    \n4. **Get Student By ID** – fetch a specific student\n    \n5. **Update Student** – modify student details\n    \n6. **Delete Student** – remove a student",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "32937167"
+	},
+	"item": [
+		{
+			"name": "Get Students",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/api/v1/students",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"students"
+					]
+				},
+				"description": "**Purpose**\n\n- Retrieves a list of all students stored in the system.\n    \n\n**Expected Response**\n\n- `200 OK`\n    \n\n```\n{\n  \"data\": [\n    {\n      \"email\": \"alice.johnson@example.com\",\n      \"id\": 1,\n      \"name\": \"Alice Johnson\"\n    }\n  ],\n  \"message\": \"All students retrieved\",\n  \"status\": \"success\"\n}\n\n ```"
+			},
+			"response": []
+		},
+		{
+			"name": "Add Student",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Successful POST request\", function () {",
+							"    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+							"});",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"name\": \"Alice Johnson\",\n  \"age\": 14,\n  \"grade\": \"8th\",\n  \"email\": \"alice.johnson@example.com\"\n}\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_url}}/api/v1/students",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"students"
+					]
+				},
+				"description": "**Purpose**\n\n- Creates a new student record.\n    \n\n**Expected Response**\n\n- `201 Created`\n    \n\n```\n{\n  \"data\": {\n    \"email\": \"alice.johnson@example.com\",\n    \"id\": 1,\n    \"name\": \"Alice Johnson\"\n  },\n  \"message\": \"Student created\",\n  \"status\": \"success\"\n}\n\n ```\n\n💡 You can capture the returned `id` and store it in `student_id` using Postman Tests."
+			},
+			"response": []
+		},
+		{
+			"name": "Update Student",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Successful PUT request\", function () {",
+							"    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+							"});",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				}
+			],
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"name\": \"Alice Johnson Updated\",\n  \"age\": 15,\n  \"grade\": \"9th\",\n  \"email\": \"alice.updated@example.com\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_url}}/api/v1/students/1",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"students",
+						"1"
+					]
+				},
+				"description": "**Purpose**\n\n- Updates an existing student’s details.\n    \n\n**Expected Response**\n\n- `200 OK`\n    \n\n```\n{\n  \"data\": {\n    \"email\": \"alice.updated@example.com\",\n    \"id\": 1,\n    \"name\": \"Alice Johnson Updated\"\n  },\n  \"message\": \"Student updated\",\n  \"status\": \"success\"\n}\n\n ```"
+			},
+			"response": []
+		},
+		{
+			"name": "Delete Student",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Successful DELETE request\", function () {",
+							"    pm.expect(pm.response.code).to.be.oneOf([200, 202, 204]);",
+							"});",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				}
+			],
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_url}}/api/v1/students/1",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"students",
+						"1"
+					]
+				},
+				"description": "**Purpose**\n\n- Deletes a student record by ID.\n    \n\n**Expected Response**\n\n- `200 OK`\n    \n\n```\n{\n  \"message\": \"Student 1 deleted\",\n  \"status\": \"success\"\n}\n\n ```"
+			},
+			"response": []
+		},
+		{
+			"name": "HealthCheck",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/healthcheck",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"healthcheck"
+					],
+					"query": [
+						{
+							"key": "id",
+							"value": "1",
+							"disabled": true
+						}
+					]
+				},
+				"description": "**Purpose**\n\n- Verifies that the API service is running and reachable.\n    \n- Used by monitoring systems (Kubernetes probes, ArgoCD sync checks).\n    \n\n**Expected Response**\n\n- `200 OK`\n    \n\n```\n{\n  \"status\": \"OK\"\n}\n\n ```"
+			},
+			"response": []
+		},
+		{
+			"name": "Get Metrics",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/metrics",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"metrics"
+					],
+					"query": [
+						{
+							"key": "id",
+							"value": "1",
+							"disabled": true
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Student By Id",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/api/v1/students/1",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"students",
+						"1"
+					]
+				},
+				"description": "**Purpose**\n\n- Fetches details of a single student using their unique ID.\n    \n\n**Expected Response**\n\n- `200 OK`\n    \n\n```\n{\n  \"data\": {\n    \"email\": \"alice.johnson@example.com\",\n    \"id\": 1,\n    \"name\": \"Alice Johnson\"\n  },\n  \"message\": \"Student retrieved\",\n  \"status\": \"success\"\n}\n\n ```"
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "id",
+			"value": "1"
+		},
+		{
+			"key": "base_url",
+			"value": "https://template.postman-echo.com"
+		}
+	]
+}

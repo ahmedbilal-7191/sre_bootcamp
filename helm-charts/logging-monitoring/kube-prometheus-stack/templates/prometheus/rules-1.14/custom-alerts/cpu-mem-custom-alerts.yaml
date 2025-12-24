@@ -1,7 +1,7 @@
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
-  name: custom-alerts
+  name: custom-infra-alerts
   namespace: {{ .Release.Namespace }} #observability
   labels:
     rules: alerting
@@ -27,7 +27,7 @@ spec:
           node_filesystem_size_bytes{fstype!="rootfs",mountpoint!="/boot"} * 100 < 10
         for: 10m
         labels:
-          severity: warning
+          severity: critical 
           team: devops
         annotations:
           summary: "High disk utilization on {{`{{ $labels.instance }}`}} (mountpoint: {{`{{ $labels.mountpoint }}`}}) "
