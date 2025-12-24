@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: Blackbox-Exporter-dashboard
+  labels:
+    grafana_dashboard: "dynamic"
+data:
+  blackbox-exporter-dashboard.json: |
+{{ .Files.Get "dashboards/blackbox-exporter.json" | indent 4 }}

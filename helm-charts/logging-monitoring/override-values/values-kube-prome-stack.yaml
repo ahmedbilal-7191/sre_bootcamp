@@ -53,23 +53,32 @@ alertmanager:
       group_wait: 10s
       group_interval: 5m
       repeat_interval: 12h
-      receiver: 'null'
-      routes:
-        - matchers:
-            - team=~"devops" #these both should be there matching the alerts in promerthes config for labels
-            - severity=~"critical"
-          receiver: slack-notifications
-          continue: true
+      receiver: slack-notifications
     receivers:
-      - name: 'null'
       - name: 'slack-notifications'
         slack_configs:
           - api_url_file: /etc/alertmanager/secrets/alertmanager-slack-secret/slack-api-url
             channel: '#all-alert-manager-prometheus'    # your channel name
             send_resolved: true
             text: |
-              *Summary:* {{ .CommonAnnotations.summary }}
-              *Description:* {{ .CommonAnnotations.description }}
+              {{- range .Alerts }}
+              *Alert:* {{ .Annotations.summary | default .Labels.alertname }}
+              *Severity:* {{ .Labels.severity }}
+              *Status:* {{ .Status }}
+
+              *Alert Name:* {{ .Labels.alertname }}
+              *Namespace:* {{ .Labels.namespace | default "N/A" }}
+              *Job:* {{ .Labels.job | default "N/A" }}
+              *Pod:* {{ .Labels.pod | default "N/A" }}
+
+              *Description:* {{ .Annotations.description }}
+
+              *StartsAt:* {{ .StartsAt }}
+              {{- if eq .Status "resolved" }}
+              *ResolvedAt:* {{ .EndsAt }}
+              {{- end }}
+              ---
+              {{- end }}
   alertmanagerSpec:
     nodeSelector:
       type: dependent_services

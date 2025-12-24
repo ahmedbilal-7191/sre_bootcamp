@@ -7,7 +7,23 @@ config:
         method: GET
         valid_status_codes: []   # defaults to 2xx
         preferred_ip_protocol: "ip4"
-
+    vault_health:
+      prober: http
+      timeout: 5s
+      http:
+        method: GET
+        valid_status_codes: [200, 429, 472, 473]
+        tls_config:
+          insecure_skip_verify: true
+    argocd_health:
+      prober: http
+      timeout: 5s
+      http:
+        method: GET
+        valid_http_versions: ["HTTP/1.1", "HTTP/2"]
+        fail_if_not_ssl: true
+        tls_config:
+          insecure_skip_verify: true
 nodeSelector:
   type: dependent_services
 
@@ -36,8 +52,9 @@ serviceMonitor:
       labels:
         app: prometheus
         release: prometheus
-    - name: alertmanager 
-      url: http://prometheus-kube-prometheus-alertmanager.observability.svc.cluster.local:30093
+
+    - name: alertmanager
+      url: http://prometheus-kube-prometheus-alertmanager.observability.svc.cluster.local:9093
       module: http_2xx
       labels:
         app: alertmanager
@@ -49,18 +66,28 @@ serviceMonitor:
       labels:
         app: loki
         release: prometheus
+
     - name: grafana
       url: http://grafana.observability.svc.cluster.local:80  # Grafana service URL
       module: http_2xx
       labels:
         app: grafana
         release: prometheus
-    - name: google
-      url: https://www.google.com
-      module: https_2xx
+
+    - name: vault
+      url: https://vault.vault.svc.cluster.local:8200/v1/sys/health  #vault service URL
+      module: vault_health
       labels:
-        app: google
+        app: vault
         release: prometheus
+
+    - name: argocd
+      url: https://argocd-server.argocd.svc.cluster.local:443/healthz  #vault service URL
+      module: argocd_health
+      labels:
+        app: argocd
+        release: prometheus
+
 replicaCount: 1
 
 service:
@@ -74,4 +101,82 @@ resources:
   limits:
     cpu: 200m
     memory: 256Mi
+
+
+# config:
+#   modules:
+#     http_2xx:
+#       prober: http
+#       timeout: 8s
+#       http:
+#         method: GET
+#         valid_status_codes: []   # defaults to 2xx
+#         preferred_ip_protocol: "ip4"
+
+# nodeSelector:
+#   type: dependent_services
+
+# serviceMonitor:
+#   enabled: true
+#   namespace: observability        # Namespace where Prometheus runs
+#   interval: 30s
+#   scrapeTimeout: 10s
+#   labels:
+#     release: prometheus        # Must match your Prometheus release name
+#   defaults:
+#     additionalMetricsRelabels: {}
+#     additionalRelabeling: []
+#     labels:
+#       release: prometheus # Add the desired label here
+#     interval: 30s
+#     scrapeTimeout: 30s
+#     honorTimestamps: true
+#     module: http_2xx
+
+#   # Define endpoints to probe
+#   targets:
+#     - name: prometheus
+#       url: http://prometheus-kube-prometheus-prometheus.observability.svc.cluster.local:9090
+#       module: http_2xx
+#       labels:
+#         app: prometheus
+#         release: prometheus
+#     - name: alertmanager 
+#       url: http://prometheus-kube-prometheus-alertmanager.observability.svc.cluster.local:30093
+#       module: http_2xx
+#       labels:
+#         app: alertmanager
+#         release: prometheus
+
+#     - name: loki
+#       url: http://loki-gateway.observability.svc.cluster.local:80   # Loki service URL
+#       module: http_2xx
+#       labels:
+#         app: loki
+#         release: prometheus
+#     - name: grafana
+#       url: http://grafana.observability.svc.cluster.local:80  # Grafana service URL
+#       module: http_2xx
+#       labels:
+#         app: grafana
+#         release: prometheus
+#     - name: google
+#       url: https://www.google.com
+#       module: https_2xx
+#       labels:
+#         app: google
+#         release: prometheus
+# replicaCount: 1
+
+# service:
+#   type: ClusterIP
+#   port: 9115
+
+# resources:
+#   requests:
+#     cpu: 50m
+#     memory: 64Mi
+#   limits:
+#     cpu: 200m
+#     memory: 256Mi
 
