@@ -1,8 +1,8 @@
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
-  name: my-backend-servicemonitor
-  namespace: observability
+  name: backend-servicemonitor
+  namespace: student-api
   labels:
     # This label is critical for the Prometheus Operator to find this ServiceMonitor
     release: prometheus
@@ -10,10 +10,10 @@ metadata:
 spec:
   selector:
     matchLabels:
-      app: my-backend # This selects your application's Service actual mein app: backedn hai sirf fix this 
+      app: backend # This selects your application's Service actual mein app: backedn hai sirf fix this 
   endpoints:
-  - port: http-metrics    # Refers to the named port in your Service spec
+  - port: web    # Refers to the named port in your Service spec
     path: /metrics
   namespaceSelector: # This tells the ServiceMonitor to look in specific namespaces
     matchNames:
-      - test
+      - student-api

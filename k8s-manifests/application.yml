@@ -40,7 +40,7 @@ spec:
               done
               echo "PostgreSQL is ready!"
         - name: migrate-container
-          image: bilal7191/backend-backend:v1.0.1
+          image: bilal7191/backend-backend:1.1.0
           envFrom:
             - configMapRef:
                 name: backend-config
@@ -50,7 +50,7 @@ spec:
           args: ["echo 'Running migrations...' && flask db upgrade && echo 'Migrations complete.'"]
       containers:
         - name: backend-container
-          image: bilal7191/backend-backend:v1.0.1
+          image: bilal7191/backend-backend:1.1.0
           envFrom:
             - configMapRef:
                 name: backend-config

@@ -2,7 +2,7 @@ apiVersion: external-secrets.io/v1
 kind: ExternalSecret
 metadata:
   name: postgres-exporter-secrets
-  # Replace with the namespace where you want the secret to be created
+  #  namespace where you want the secret to be created
   namespace: observability
 spec:
   refreshInterval: "1h" # Syncs the secret every hour

@@ -11,8 +11,7 @@ spec:
   - name: service-restart-alerts
     rules:
       - alert: DatabaseRestarted
-        expr: increase(kube_pod_container_status_restarts_total{pod=~"postgres.*"}[10m]) > 0
-        for: 1m
+        expr: sum by (pod) (increase(kube_pod_container_status_restarts_total{pod=~"postgres-db.*"}[5m])) > 0
         labels:
           severity: critical
           team: devops
@@ -21,8 +20,7 @@ spec:
           description: "Postgres pod restarted in the last 10 minutes."
 
       - alert: ArgoCDRestarted
-        expr: increase(kube_pod_container_status_restarts_total{pod=~"argocd.*"}[10m]) > 0
-        for: 1m
+        expr: sum by (pod) (increase(kube_pod_container_status_restarts_total{pod=~"argocd-server.*"}[5m])) > 0
         labels:
           severity: warning
           team: devops
@@ -31,8 +29,7 @@ spec:
           description: "ArgoCD pod restarted in the last 10 minutes."
 
       - alert: VaultRestarted
-        expr: increase(kube_pod_container_status_restarts_total{pod=~"vault.*"}[10m]) > 0
-        for: 1m
+        expr: sum by (pod) (increase(kube_pod_container_status_restarts_total{pod=~"vault.*"}[5m])) > 0
         labels:
           severity: critical
           team: devops

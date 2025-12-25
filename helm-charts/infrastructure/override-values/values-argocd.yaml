@@ -19,7 +19,7 @@ controller:
             - alert: ArgoCDRestarted     
               expr: sum by (pod) (increase(kube_pod_container_status_restarts_total{pod=~"argocd-server.*"}[5m])) > 0 #Check the pods name and also not per container check
               labels:
-                severity: warning
+                severity: critical
                 team: devops
               annotations:
                 summary: "ArgoCD restarted"

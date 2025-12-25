@@ -1,0 +1,77 @@
+{{- if .Values.alerts.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: application-alerts
+  namespace: {{ .Release.Namespace }} #observability cechk wherhter specific or cluster wide watch 
+  labels:
+    rules: alerting # as per helm configs
+spec:
+  groups:
+  # Error Rate Spike Alerts
+  - name: error-rate-alerts
+    rules:
+      - alert: HighErrorRateSpike
+        expr: |
+          sum(rate(http_requests_total{http_status=~"5.."}[10m]))
+          /
+          sum(rate(http_requests_total[10m])) > 0.05 
+          AND
+          sum(rate(http_requests_total[10m])) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+          team: devops
+        annotations:
+          summary: "High error rate detected in the last 10 minutes"
+          description: |
+            5xx error rate is greater than 5%.
+            Current: {{`{{ $value | humanizePercentage }}`}}
+
+
+  # Latency Alerts (P90 / P95 / P99)
+  - name: service-latency-alerts
+    rules:
+      - alert: HighRequestLatencyP90
+        expr: |
+          histogram_quantile(0.90,
+            sum by (le,job) (rate(http_request_duration_seconds_bucket[5m]))
+          ) > 0.5
+        for: 10m
+        labels:
+          severity: critical
+          team: devops
+        annotations:
+          summary: "High P90 request latency for {{`{{ $labels.job }}`}}"
+          description: |
+            P90 latency > 0.5s for 10 minutes. Current: {{`{{ $value }}`}}s
+
+      - alert: HighRequestLatencyP95
+        expr: |
+          histogram_quantile(0.95,
+            sum by (le,job) (rate(http_request_duration_seconds_bucket[5m]))
+          ) > 1
+        for: 5m
+        labels:
+          severity: critical
+          team: devops
+        annotations:
+          summary: "High P95 request latency for {{`{{ $labels.job }}`}}"
+          description: |
+            P95 latency > 1s for 5 minutes. Current: {{`{{ $value }}`}}s
+
+      - alert: HighRequestLatencyP99
+        expr: |
+          histogram_quantile(0.99,
+            sum by (le,job) (rate(http_request_duration_seconds_bucket[5m]))
+          ) > 2
+        for: 2m
+        labels:
+          severity: critical
+          team: devops
+        annotations:
+          summary: "High P99 request latency for {{`{{ $labels.job }}`}}"
+          description: |
+            P99 latency > 2s for 2 minutes. Current: {{`{{ $value }}`}}s
+{{- end }}
+

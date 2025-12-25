@@ -1,0 +1,20 @@
+architecture: standalone
+fullnameOverride: postgres-db #for this case the postgreshost of deploymen tand this should be same
+auth:
+  existingSecret: db-secrets #for this i think look for url in vault check once
+  secretKeys:
+    adminPasswordKey: "POSTGRES_PASSWORD"
+    userPasswordKey: "POSTGRES_PASSWORD"
+  username: "dev_user"
+  database: "dev_db"
+primary:
+  replicaCount: 1
+  nodeSelector:
+    type: database
+  persistence:
+    enabled: true
+    size: 500Mi
+    storageClass: csi-hostpath-sc
+
+alerts:
+  enabled: true

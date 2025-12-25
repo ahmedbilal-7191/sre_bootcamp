@@ -1,24 +1,159 @@
-alertmanager:
-  enabled: true
-  config:
-    route:
-      group_wait: 10s
-      group_interval: 5m
-      repeat_interval: 12h
-      receiver: 'null'
-      routes:
-        - matchers:
-            - team=~"devops" #these both should be there matching the alerts in promerthes config for labels
-            - severity=~"critical"
-          receiver: slack-notifications
-          continue: true
-    receivers:
-      - name: 'null'
-      - name: 'slack-notifications'
-        slack_configs:
-          - api_url_file: /etc/alertmanager/secrets/alertmanager-slack-secret/slack-api-url
-            channel: '#all-alert-manager-prometheus'    # your channel name
-            send_resolved: true
-            text: |
-              *Summary:* {{ .CommonAnnotations.summary }}
-              *Description:* {{ .CommonAnnotations.description }}
+# alertmanager:
+#   enabled: true
+#   config:
+#     route:
+#       group_wait: 10s
+#       group_interval: 5m
+#       repeat_interval: 12h
+#       receiver: 'null'
+#       routes:
+#         - matchers:
+#             - team=~"devops" #these both should be there matching the alerts in promerthes config for labels
+#             - severity=~"critical"
+#           receiver: slack-notifications
+#           continue: true
+#     receivers:
+#       - name: 'null'
+#       - name: 'slack-notifications'
+#         slack_configs:
+#           - api_url_file: /etc/alertmanager/secrets/alertmanager-slack-secret/slack-api-url
+#             channel: '#all-alert-manager-prometheus'    # your channel name
+#             send_resolved: true
+#             text: |
+#               *Summary:* {{ .CommonAnnotations.summary }}
+#               *Description:* {{ .CommonAnnotations.description }}
+
+
+
+
+
+
+
+
+
+# Even this is not working 
+# # Alertmanager Configuration
+# alertmanager:
+#   enabled: true
+#   config:
+#     route:
+#       group_wait: 10s
+#       group_interval: 5m
+#       repeat_interval: 12h
+#       receiver: 'null'
+#       routes:
+#         receiver: slack-notifications
+#         continue: true
+#     receivers:
+#       - name: 'null'
+#       - name: 'slack-notifications'
+#         slack_configs:
+#           - api_url_file: /etc/alertmanager/secrets/alertmanager-slack-secret/slack-api-url
+#             channel: '#all-alert-manager-prometheus'    # your channel name
+#             send_resolved: true
+#             text: |
+#               {{- range .Alerts }}
+#               *Alert:* {{ .Annotations.summary | default .Labels.alertname }}
+#               *Severity:* {{ .Labels.severity }}
+#               *Status:* {{ .Status }}
+
+#               *Alert Name:* {{ .Labels.alertname }}
+#               *Namespace:* {{ .Labels.namespace | default "N/A" }}
+#               *Job:* {{ .Labels.job | default "N/A" }}
+#               *Pod:* {{ .Labels.pod | default "N/A" }}
+
+#               *Description:* {{ .Annotations.description }}
+
+#               *StartsAt:* {{ .StartsAt }}
+#               {{- if eq .Status "resolved" }}
+#               *ResolvedAt:* {{ .EndsAt }}
+#               {{- end }}
+#               ---
+#               {{- end }}
+
+
+# # May be the list is issue lets try this 
+# alertmanager:
+#   enabled: true
+#   config:
+#     route:
+#       receiver: 'null'
+#       group_wait: 10s
+#       group_interval: 5m
+#       repeat_interval: 12h
+#       routes:
+#         - receiver: slack-notifications
+#           continue: true
+
+#     receivers:
+#       - name: 'null'
+
+#       - name: 'slack-notifications'
+#         slack_configs:
+#           - api_url_file: /etc/alertmanager/secrets/alertmanager-slack-secret/slack-api-url
+#             channel: '#all-alert-manager-prometheus'
+#             send_resolved: true
+#             text: |
+#               {{- range .Alerts }}
+#               *Alert:* {{ .Annotations.summary | default .Labels.alertname }}
+#               *Severity:* {{ .Labels.severity | default "unknown" }}
+#               *Status:* {{ .Status }}
+
+#               *Namespace:* {{ .Labels.namespace | default "N/A" }}
+#               *Job:* {{ .Labels.job | default "N/A" }}
+#               *Pod:* {{ .Labels.pod | default "N/A" }}
+
+#               *Description:* {{ .Annotations.description | default "N/A" }}
+#               *StartsAt:* {{ .StartsAt }}
+
+#               {{- if eq .Status "resolved" }}
+#               *ResolvedAt:* {{ .EndsAt }}
+#               {{- end }}
+#               ---
+#               {{- end }}
+
+
+
+
+
+
+
+
+
+# # working model is 
+
+# alertmanager:
+
+#   enabled: true
+#   config:
+#     route:
+#       receiver: 'null'
+#       group_wait: 10s
+#       group_interval: 5m
+#       repeat_interval: 12h
+#       routes:
+#         - receiver: slack-notifications
+#           continue: true
+
+#     receivers:
+#       - name: 'null'
+
+#       - name: 'slack-notifications'
+#         slack_configs:
+#           - api_url_file: /etc/alertmanager/secrets/alertmanager-slack-secret/slack-api-url
+#             channel: '#all-alert-manager-prometheus'
+#             send_resolved: true
+#             text: |
+#               {{- range .Alerts }}
+#               *Alert:* {{ if .Annotations.summary }}{{ .Annotations.summary }}{{ else }}{{ .Labels.alertname }}{{ end }}
+#               *Severity:* {{ if .Labels.severity }}{{ .Labels.severity }}{{ else }}unknown{{ end }}
+#               *Status:* {{ .Status }}
+
+#               *Description:* {{ if .Annotations.description }}{{ .Annotations.description }}{{ else }}N/A{{ end }}
+#               *StartsAt:* {{ .StartsAt }}
+
+#               {{- if eq .Status "resolved" }}
+#               *ResolvedAt:* {{ .EndsAt }}
+#               {{- end }}
+#               ---
+#               {{- end }}

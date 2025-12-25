@@ -1,0 +1,23 @@
+{{- if .Values.alerts.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: database-restart-alerts
+  # namespace: observability also check all ns or only observability
+  namespace: {{ .Release.Namespace }}
+  labels:
+    rules: alerting # as per helm Configurations
+spec:
+  groups:
+  # Restart Alerts for DB 
+  - name: db-restart-alerts
+    rules:
+      - alert: DatabaseRestarted
+        expr: sum by (pod) (increase(kube_pod_container_status_restarts_total{pod=~"postgres-db.*"}[5m])) > 0
+        labels:
+          severity: critical
+          team: devops
+        annotations:
+          summary: "Database pod restarted"
+          description: "Postgres pod restarted in the last 5 minutes."
+{{- end }}

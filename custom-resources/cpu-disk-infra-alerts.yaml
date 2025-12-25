@@ -1,7 +1,7 @@
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
-  name: custom-alerts
+  name: infra-alerts
   namespace: observability
   labels:
     rules: alerting
@@ -10,7 +10,7 @@ spec:
 
   # Host Alerts (CPU, Disk)
 
-  - name: host-alerts
+  - name: infrastructure-alerts
     rules:
       - alert: HighCpuUtilization
         expr: 100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80

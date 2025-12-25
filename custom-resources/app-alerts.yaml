@@ -1,8 +1,8 @@
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
-  name: custom-alerts
-  namespace: observability
+  name: application-alerts
+  namespace: student-api
   labels:
     rules: alerting
 spec:
@@ -12,8 +12,10 @@ spec:
     rules:
       - alert: HighErrorRateSpike
         expr: |
-          sum(rate(http_requests_total{status=~"5.."}[10m]))
+          sum(rate(http_requests_total{http_status=~"5.."}[10m]))
           /
+          sum(rate(http_requests_total[10m])) > 0.05 
+          AND
           sum(rate(http_requests_total[10m])) > 0.05
         for: 5m
         labels:
@@ -70,4 +72,3 @@ spec:
           summary: "High P99 request latency for {{ $labels.job }}"
           description: |
             P99 latency > 2s for 2 minutes. Current: {{ $value }}s
-
