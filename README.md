@@ -970,13 +970,17 @@ Helm enables packaging, versioning, configuration overrides, and reusable deploy
 
 ```
 helm-charts/
-├── backend/
+├── application/
+│   ├── backend/
+│   └── postgresql/
+│   └── values-postgre.yaml
 ├── infrastructure/
-│   ├── vault/
-│   └── external-secrets/
-└── override-values/
-    ├── vault-fin-1.yaml
-    └── eso-fin-1.yaml
+    ├── vault/
+    └── external-secrets/
+    └── override-values/
+        ├── values-vault.yaml
+        └── values-eso.yaml
+
 
 ```
 
@@ -1048,6 +1052,7 @@ Deploy the backend Helm chart:
 ```
 helm install backend helm-charts/backend -n student-api
 ```
+<img width="1920" height="756" alt="Deployment" src="https://github.com/user-attachments/assets/c3bb0de7-3fe4-4064-87b2-a27f504924b9" />
 
 #### Notes
 - The backend chart includes ExternalSecret templates
@@ -1097,20 +1102,24 @@ Instead of manually running kubectl apply or helm install, ArgoCD continuously w
 Your repo now includes:
 ```
 argomanifest/
-├── app.yaml
+├── backend-app.yaml
+├── db-app.yaml
 └── external-secrets.yaml
 
 helm-charts/
-├── backend/
+├── application/
+│   ├── backend/
+│   └── postgresql/
+│   └── values-postgre.yaml
 ├── infrastructure/
-│   ├── vault/
-│   ├── external-secrets/
-│   └── argo-cd/
-│
-└── override-values/
-    ├── vault-fin-1.yaml
-    ├── eso-fin-1.yaml
-    └── values-argocd.yaml
+    ├── vault/
+    └── external-secrets/
+    └── argo-cd/
+    └── override-values/
+        ├── values-vault.yaml
+        └── values-eso.yaml
+        └── values-argocd.yaml
+
 ```
 
 ### ArgoCD Installation & Setup
@@ -1399,6 +1408,26 @@ logging-monitoring/
 | Application metrics & logs | `backend/dashboards/*.json`                                     | `backend/templates/dashboard-cm/`                                                  |
 | Blackbox probing           | `blackbox-exporter/dashboards/*.json`                           | `blackbox-exporter/templates/dashboard-cm/`                                        |
 
+#### Node-Metrics
+
+<img width="1920" height="909" alt="Node_Exporter" src="https://github.com/user-attachments/assets/066a56d2-2e88-474e-87b0-49029c4704c8" />
+
+#### Kube-State-Metrics
+
+<img width="1920" height="911" alt="KubeState" src="https://github.com/user-attachments/assets/7b4ffd7c-275c-48f8-ae96-8b5a2df21219" />
+
+#### Postgresql 
+
+<img width="1920" height="909" alt="PostgresSql" src="https://github.com/user-attachments/assets/65a81088-0d6b-4701-b892-54227e12e5e8" />
+
+#### Application-Metrics
+
+<img width="1920" height="909" alt="Application" src="https://github.com/user-attachments/assets/76eabeb0-ea50-4f5c-b4c3-47df0473bbb6" />
+
+#### Blackbox-Exporter 
+
+<img width="1920" height="905" alt="Blackbox Exporter (HTTP prober)" src="https://github.com/user-attachments/assets/03d43f3a-7c0a-4aa0-bcfd-c37c647ae0ee" />
+
 #### Alerting Strategy
 
 #### Infrastructure Alerts (Prometheus)
@@ -1465,6 +1494,8 @@ kube-prometheus-stack/templates/alertmanager/externalsecret.yaml
 | Vault restart                  | kube-state-metrics      |
 | ArgoCD restart                 | kube-state-metrics      |
 
+<img width="1920" height="914" alt="SlackAlert_UI" src="https://github.com/user-attachments/assets/87398eaa-a609-4d98-a56e-b65502a84715" />
+
 #### Deployment Notes
 
 #### Important
@@ -1487,6 +1518,7 @@ If they were disabled in earlier milestones, re-enable them now to ensure:
 - Restart alerts trigger on pod restarts
 
 Wherer to access the prometehus,grafana ,alertmanager argocd,vault,application,loki gateway etc prober blackbox with portnumbers make a table
+
 
 
 
