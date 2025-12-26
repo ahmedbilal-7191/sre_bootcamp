@@ -11,6 +11,11 @@ Built as part of an intensive SRE Bootcamp, this repository demonstrates a compl
 - Observability stack (Prometheus, Loki, Grafana, Alertmanager)
 - Dashboards & Alerts
 
+## Project Overview Diagram
+
+<img width="2898" height="1212" alt="architecture-diagram-sre" src="https://github.com/user-attachments/assets/2bcae174-e064-4e8d-9ba7-3726e13e8091" />
+
+
 ## Tech Stack(Application)
 
 | Component   | Technology           |
@@ -1518,6 +1523,7 @@ If they were disabled in earlier milestones, re-enable them now to ensure:
 - Restart alerts trigger on pod restarts
 
 Wherer to access the prometehus,grafana ,alertmanager argocd,vault,application,loki gateway etc prober blackbox with portnumbers make a table
+
 
 
 
