@@ -11,7 +11,7 @@ Built as part of an intensive SRE Bootcamp, this repository demonstrates a compl
 - Observability stack (Prometheus, Loki, Grafana, Alertmanager)
 - Dashboards & Alerts
 
-## Project Overview Diagram
+## Project Overview 
 
 <img width="2898" height="1212" alt="architecture-diagram-sre" src="https://github.com/user-attachments/assets/2bcae174-e064-4e8d-9ba7-3726e13e8091" />
 
@@ -810,7 +810,7 @@ kubectl -n vault create secret generic vault-tls \
 
 #### 1.Deploy Vault (Node C – dependent_services)
 ```
-kubectl apply -f k8s-manifests/vault/
+kubectl apply -f k8s-manifests/vault/vault.yaml
 ```
 Vault pods are scheduled on the dependent_services node using nodeSelector.
 
@@ -874,7 +874,7 @@ vault write auth/kubernetes/role/external-secrets-operator \
 
 ##### Store database credentials:
 ```
-vault kv put secret/database POSTGRES_USER="db_user" POSTGRES_PASSWORD="db_password" POSTGRES_DB="name_db"
+vault kv put secret/database POSTGRES_USER="db_username" POSTGRES_PASSWORD="db_password" POSTGRES_DB="name_db"
 ```
 
 #### 2.Deploy External Secrets Operator (ESO)
@@ -944,7 +944,7 @@ kubectl get svc -A
 
 ### Test health endpoint:
 ```
-curl -i http://<NODE_IP>:32000/health
+curl -i http://<NODE_IP>:32000/healthcheck
 ```
 
 Expected response:
@@ -1003,7 +1003,7 @@ If HTTPS is not required, disable TLS mounts and use HTTP in values
 ```
 helm install vault helm-charts/infrastructure/vault \
   -n vault \
-  -f override-values/vault-fin-1.yaml
+  -f helm-charts/infrastructure/override-values/values-vault.yaml
 ```
 
 ##### Important Notes
@@ -1041,7 +1041,7 @@ If Vault uses HTTPS:
 ```
 helm install external-secrets helm-charts/infrastructure/external-secrets \
   -n external-secrets \
-  -f override-values/eso-fin-1.yaml
+  -f helm-charts/infrastructure/override-values/values-eso.yaml
 ```
 
 ##### Apply ClusterSecretStore:
@@ -1051,16 +1051,36 @@ kubectl apply -f external-secrets/clusterstore.yaml
 
 Once configured, ESO automatically syncs secrets from Vault into the target namespaces.
 
-#### 3.Deploy Backend Application (Student API)
+#### 3.Deploy PostgreSQL (Database)
+
+Deploy PostgreSQL
+```
+helm install postgres-db helm-charts/application/postgresql -f helm-charts/application/values-postgres.yaml -n student-api
+```
+
+#### Note
+
+Edit helm-charts/application/values-postgres.yaml as needed.
+
+If Prometheus CRDs are not installed, disable alerts:
+```
+alerts:
+  enabled: false
+```
+
+`ExternalSecrets` are defined inside the PostgreSQL chart and will fetch DB credentials automatically.
+
+#### 4.Deploy Backend Application (Student API)
 
 Deploy the backend Helm chart:
 ```
-helm install backend helm-charts/backend -n student-api
+helm install backend helm-charts/application/backend -n student-api
 ```
 <img width="1920" height="756" alt="Deployment" src="https://github.com/user-attachments/assets/c3bb0de7-3fe4-4064-87b2-a27f504924b9" />
 
 #### Notes
-- The backend chart includes ExternalSecret templates
+- Backend consumes DB credentials via Kubernetes Secrets(which was deployed by the DB `external-secret`)
+- Database migrations run using an init container before the main app starts
 - Disable the following if observability is not installed:
 ```
 serviceMonitor:
@@ -1069,8 +1089,6 @@ serviceMonitor:
 alerts:
   enabled: false
 ```
-
-- Database migrations run using an init container before the main app starts
 
 ### Access the REST API
 
@@ -1081,15 +1099,15 @@ kubectl get svc -n student-api
 
 Example URL:
 ```
-http://<NODE-IP>:5000
+http://<NODE-IP>:5000/healthcheck
 ```
 
 ### API Testing
 
 Test using Postman or curl:
 ```
-GET  /students  → 200 OK
-POST /students  → 200 OK
+GET  api/v1/students  → 200 OK
+POST api/v1/students  → 200 OK
 ```
 
 All CRUD endpoints must return 200 OK.
@@ -1135,7 +1153,14 @@ ArgoCD is installed using a locally managed Helm chart.
 ```
 helm install argocd helm-charts/infrastructure/argo-cd \
   -n argocd \
-  -f override-values/values-argocd.yaml
+  -f helm-charts/infrastructure/override-values/values-argocd.yaml
+```
+
+#### Retrieve Initial Admin Password
+```
+kubectl get secret argocd-initial-admin-secret \
+  -n argocd \
+  -o jsonpath="{.data.password}" | base64 -d
 ```
 
 #### Scheduling & Observability Notes
@@ -1153,11 +1178,11 @@ controller:
 
 The argomanifest/external-secrets.yaml file configures External Secrets for ArgoCD.
 
-- Syncs credentials for private Git repositories
+- Syncs credentials for `private` Git repositories
 - Uses an existing ClusterSecretStore (already applied in previous milestones)
 - Secrets are automatically injected into the ArgoCD namespace
 
-#### Apply it once:
+#### Apply it once(Private Repo Only):
 ```
 kubectl apply -f argomanifest/external-secrets.yaml
 ```
@@ -1165,8 +1190,13 @@ kubectl apply -f argomanifest/external-secrets.yaml
 ### One-Click Application Deployment via ArgoCD
 
 #### Deploy applications by applying the ArgoCD Application manifest:
+Postgresql DB
 ```
-kubectl apply -f argomanifest/app.yaml
+kubectl apply -f argomanifest/db-app.yaml
+```
+Backend Application
+```
+kubectl apply -f argomanifest/backend-app.yaml
 ```
 
 This enables:
@@ -1192,26 +1222,14 @@ What Happens After CI Success
 
 ### Result
 
-ArgoCD automatically detects the update and deploys the new version — true one-click deployment.
-
-### Access ArgoCD UI (Optional)
-
 #### Port-forward ArgoCD Server
 ```
 kubectl port-forward svc/argocd-server -n argocd 8080:80
 ```
 
-### Access UI:
-```
-http://localhost:8080
-```
+ArgoCD automatically detects the update and deploys the new version — true one-click deployment.
+<img width="1920" height="913" alt="Argocd-Dashboard" src="https://github.com/user-attachments/assets/f5030edf-6ec6-41ee-af09-8831c96108ee" />
 
-### Retrieve Initial Admin Password
-```
-kubectl get secret argocd-initial-admin-secret \
-  -n argocd \
-  -o jsonpath="{.data.password}" | base64 -d
-```
 ----------------------------------
 
 ## Milestone 10 — Setup an Observability Stack (Prometheus, Loki, Grafana, Promtail) 
@@ -1311,7 +1329,7 @@ helm install prometheus \
 ```
 helm install loki \
   ./loki \
-  -f ./override-values/loki-doc.yaml \
+  -f ./override-values/values-loki.yaml \
   -n observability
 ```
 
@@ -1319,7 +1337,7 @@ helm install loki \
 ```
 helm install promtail \
   ./promtail \
-  -f ./override-values/quick2.yaml \
+  -f ./override-values/values-promtail.yaml \
   -n observability
 ```
 
@@ -1463,15 +1481,9 @@ These alerts are enabled via backend Helm values.yaml.
 
 #### Restart Alerts
 Restart alerts for:
-- Database
-- HashiCorp Vault
-- ArgoCD
-
-are enabled via:
-```
-override-values/values-kube-prome-stack.yaml
-```
-using Alertmanager rules exposed by kube-prometheus-stack.
+- Database (In templates folder of postgrsql )
+- HashiCorp Vault (In values-vault.yaml file)
+- ArgoCD (In values-argocd.yaml file)
 
 #### Slack Alert Notifications
 
@@ -1505,7 +1517,8 @@ kube-prometheus-stack/templates/alertmanager/externalsecret.yaml
 
 #### Important
 Ensure alerting and ServiceMonitor flags are enabled for:
-- Backend application
+- Backend 
+- DB
 - ArgoCD
 - Vault
 If they were disabled in earlier milestones, re-enable them now to ensure:
@@ -1522,9 +1535,4 @@ If they were disabled in earlier milestones, re-enable them now to ensure:
 - Slack receives alert notifications
 - Restart alerts trigger on pod restarts
 
-Wherer to access the prometehus,grafana ,alertmanager argocd,vault,application,loki gateway etc prober blackbox with portnumbers make a table
-
-
-
-
-
+Wherer to access the prometehus,grafana ,alertmanager argocd,vault,application,loki gateway etc prober blackbox with portnumbers make a table(PortNumbers Sort of)
