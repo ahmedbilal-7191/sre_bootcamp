@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: backend-argo-app
+  name: db-argo-app
   namespace: argocd # Application resources are typically in the Argo CD namespace
 spec:
   project: default # Use the 'default' project or specify your own
@@ -12,7 +12,10 @@ spec:
     # The Git revision (branch, tag, or commit hash) to track
     targetRevision: HEAD
     # FIX: The path within the repository to the Helm chart folder
-    path: "helm-charts/backend"
+    path: "helm-charts/application/postgresql"
+    helm:
+      valueFiles:
+        - ../values-postgres.yaml
     # 'chart' field removed as it's not needed for Git-sourced charts
   # Defines the destination (where the application will be deployed)
   destination:
@@ -22,7 +25,7 @@ spec:
   # Configuration for Argo CD's deployment behavior
   syncPolicy:
     automated:
-      prune: true # Allow Argo CD to delete resources removed from the Git repository
+      prune: true # Allow Argo CD to delete resources removed from the Git repository shayad hatade bhai config drigt chalta db mein
       selfHeal: true # Allow Argo CD to correct manual changes to match the desired state in Git
     syncOptions:
     - CreateNamespace=true # if 'student-api' doesn't exist

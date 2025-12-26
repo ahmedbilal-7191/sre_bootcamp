@@ -92,13 +92,13 @@ jobs:
 
       - name: Update image tag in values.yaml
         run: |
-          sed -i "s/tag: .*/tag: \"${{ steps.vars.outputs.VERSION }}\"/" helm-charts/backend/values.yaml
+          sed -i "s/tag: .*/tag: \"${{ steps.vars.outputs.VERSION }}\"/" helm-charts/application/backend/values.yaml
 
       - name: Commit & Push Changes
         run: |
           git config --global user.email "${{ secrets.EMAIL }}"
           git config --global user.name "ahmedbilal-7191"
 
-          git add helm-charts/backend/values.yaml
+          git add helm-charts/application/backend/values.yaml
           git commit -m "Update image tag to ${{ steps.vars.outputs.VERSION }}"
           git push origin main
