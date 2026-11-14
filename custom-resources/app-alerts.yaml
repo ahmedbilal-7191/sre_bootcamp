@@ -8,6 +8,7 @@ metadata:
 spec:
   groups:
   # Error Rate Spike Alerts
+  # also can be kept under specific resource like applicaiton only
   - name: error-rate-alerts
     rules:
       - alert: HighErrorRateSpike
