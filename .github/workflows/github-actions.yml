@@ -2,6 +2,8 @@ name: CI-CD Pipeline
 
 permissions:
   contents: write
+
+# Can go for branh protection and split the workflow
 on:
   push:
     # branches: [ main ]
