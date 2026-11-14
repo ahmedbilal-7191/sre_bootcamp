@@ -1,3 +1,4 @@
+# Same instruction like the infra
 # alertmanager:
 #   enabled: true
 #   config:
