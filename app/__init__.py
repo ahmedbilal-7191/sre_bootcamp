@@ -14,6 +14,7 @@ def create_app(config_name=None):
     setup_logging()
     app = Flask(__name__)
     # If running under Gunicorn, use its handlers
+    # further scope is auth and authnz like our local setup
     gunicorn_logger = logging.getLogger('gunicorn.error')
     if gunicorn_logger.handlers:
         app.logger.handlers = gunicorn_logger.handlers
