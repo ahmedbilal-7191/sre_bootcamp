@@ -3,6 +3,7 @@ kind: ExternalSecret
 metadata:
   name: postgres-exporter-secrets
   #  namespace where you want the secret to be created
+  #  also we have the dynamic locally done using agent injector instaead of ESO but for gitops Okay 
   namespace: observability
 spec:
   refreshInterval: "1h" # Syncs the secret every hour
