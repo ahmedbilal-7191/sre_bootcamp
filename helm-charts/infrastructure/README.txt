@@ -1,3 +1,5 @@
+We can push the whole helm charts part from locally saving ogitub to the remote url then point directly to it instedad savin git to github but we also gave the values.yaml for each of the remote repos using the values folder dynamically int he appplicatios only because then in app it ahs the remote repo with pinned version and the values targeting  in curerrnt repo
+
 helm repo add argo https://argoproj.github.io/argo-helm
 helm repo update
 kubectl create namespace argocd
