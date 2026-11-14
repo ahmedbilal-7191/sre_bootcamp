@@ -6,6 +6,7 @@ metadata:
 spec:
   project: default # Use the 'default' project or specify your own
   # source of the application
+  # Can be pointed to the remote helm cahrt pinned version too can change the github page to helm repo also and also we can move to older apps of apps pattern
   source:
     # Must match the URL defined in the Secret (private-repo-creds)
     repoURL: "https://github.com/ahmedbilal-7191/sre_bootcamp.git"
